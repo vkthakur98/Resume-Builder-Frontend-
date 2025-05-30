@@ -1,42 +1,20 @@
-import { useRef } from 'react'
-import './App.css'
-import React from 'react'
-import ResumeBuilder from './components/ResumeBuilder'
-import ProfileSection from './components/ProfileSection'
-import { useReactToPrint } from 'react-to-print';
-
-
-const MyComponentToPrint = React.forwardRef((props, ref) => (
-  <div ref={ref}>
-    <h1>This part will be printed</h1>
-    <p>Only this component will appear in the printout.</p>
-  </div>
-));
+import React, { useRef } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import MyComponentToPrint from './components/MyComponentToPrint';
+import ResumeBuilder from './components/ResumeBuilder';
 
 
 function App() {
-
-  const componentRef = useRef();
-
-  const actualPrint = useReactToPrint({
-    content: () => componentRef.current,
-  });
-
-  const handlePrint = () => {
-    console.log('Ref before print:', componentRef.current); // <--- should not be null
-    actualPrint(); // we call the print handler separately
-  };
-  
-  
-  
-
+  const componentRef = useRef(null);
   return (
     <div className="App">
-      <ResumeBuilder />
-      <MyComponentToPrint ref={componentRef} /> 
-      <button className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded' onClick={handlePrint}>Print</button>
+      <div className='bg-[#1E3A8A] text-white p-4'>
+      <h1 className="text-2xl font-bold mb-4">Resume Builder</h1>
+      </div>
+        <ResumeBuilder ></ResumeBuilder>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

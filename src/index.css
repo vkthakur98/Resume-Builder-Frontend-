@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+@media print {
+    body * {
+      visibility: hidden;
+    }
+  
+    .printable-content, .printable-content * {
+      visibility: visible;
+      background-color: red;
+    }
+  
+    .printable-content {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    .blue-bg {
+      background-color: #1C398E !important;
+    }
+  }
