@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-import React from "react";
 import { useRef } from "react";
 import html2canvas from "html2canvas";
 import "../ResumeLayout.css";
-import ProfileSection from "./ProfileSection";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight,faArrowLeft,faDownload,faPlus } from '@fortawesome/free-solid-svg-icons';
+import Switch from "./Switch";
 
 
 
@@ -30,6 +29,7 @@ export default function ResumeBuilder({ handlePrint }) {
   const [projectName,setProjectName]  = useState("");
   const [projectDesc,setProjectDesc] = useState("");
   const [projectLink,setProjectLink] = useState("");
+  const [fresher, setFresher] = useState("Experience");
 
   
   const [formData, setFormData] = useState({
@@ -49,7 +49,7 @@ export default function ResumeBuilder({ handlePrint }) {
   const handleGenerateAI = async () => {
   setLoading(true);
   try {
-    const res = await fetch("http://localhost:5000/generate-summary", {
+    const res = await fetch("https://resume-builder-backend-2-wn34.onrender.com/generate-summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ jobTitle: formData.title }),
@@ -124,7 +124,7 @@ export default function ResumeBuilder({ handlePrint }) {
       ...formData,
       projects: [...formData.projects, {projectName: projectName, projectDesc: projectDesc, projectLink:  projectLink}],
     });
-    console.log();
+    console.log(formData.projects);
   };
 
   const handleChange = (e) => {
@@ -133,7 +133,7 @@ export default function ResumeBuilder({ handlePrint }) {
 
   return (
     <div className="container">
-      <div className="form-section">
+      <div className="form-section w-[650px] h-[90vh] overflow-y-scroll">
       {step === 1 && (
       <>
       <h1 className="text-[20px] font-bold mb-4">Personal Information</h1>
@@ -195,15 +195,15 @@ export default function ResumeBuilder({ handlePrint }) {
       <>
       <h1 className="text-[20px] font-bold mb-4">Professional Background</h1>
       <textarea
-  className="input"
+  className="input h-[200px]"
   value={formData.summary}
   name="summary"
-  maxLength={500} // Set your desired max character limit
+  maxLength={600} // Set your desired max character limit
   placeholder="Professional Summary"
   onChange={handleChange}
 />
-<div className="text-right text-sm text-gray-500 mt-1">
-  {formData.summary.length} / 500 characters
+<div className="text-right text-sm text-gray-500 mt-[-20px]">
+  {formData.summary.length} / 1000
 </div>
 
           <button
@@ -213,7 +213,11 @@ export default function ResumeBuilder({ handlePrint }) {
       >
         {loading ? "Generating..." : "Generate with AI ✨"}
       </button>
-        <h1 className="text-[18px] mt-4 mb-4">Experience</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-[18px] mt-4 mb-4">{fresher}</h1> 
+      <Switch fresher={fresher} setFresher={setFresher}></Switch>
+      </div>
+        <div className={fresher === "Experience" ? "block" : "hidden"}>
         <label>Role</label>
         <div>
         <input className="input" name="experience-role" placeholder="Role" onChange={(e)=> setExprole(e.target.value)} />
@@ -233,6 +237,14 @@ export default function ResumeBuilder({ handlePrint }) {
         </div>
         {/* <input className="input" name="skills" placeholder="Skills" onChange={handleChange} /> */}
         <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddExperience()} >Add Experience <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
+        </div>
+        <div className={fresher === "Projects" ? "block" : "hidden"}>
+      {/* <h1 className="text-[20px] font-bold mb-4">Projects</h1> */}
+      <input className="input" name="project" placeholder="Your project name" onChange={(e) =>setProjectName(e.target.value) } /><br></br>
+      <textarea className="input" maxLength={1000} placeholder="Describe your project, write about tech stack etc." onChange={(e) => setProjectDesc(e.target.value) }></textarea>
+      <input className="input" name="project-link" placeholder="Project Link" onChange={(e) => setProjectLink(e.target.value)} /><br></br>
+      <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddProject()} >Add Project <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>   
+        </div>
       </>
     )}
     {step === 3 && (
@@ -265,150 +277,112 @@ export default function ResumeBuilder({ handlePrint }) {
       <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddLanguage()} >Add Language</button>
       </>
     )}
-
-    {step === 5 && (
-      <>
-      <h1 className="text-[20px] font-bold mb-4">Projects</h1>
-      <input className="input" name="project" placeholder="Your project name" onChange={(e) =>setProjectName(e.target.value) } /><br></br>
-      <textarea className="input" maxLength={1000} placeholder="Describe your project, write about tech stack etc." onChange={(e) => setProjectDesc(e.target.value) }></textarea>
-      <input className="input" name="project-link" placeholder="Project Link" onChange={(e) => setProjectLink(e.target.value)} /><br></br>
-      <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddProject()} >Add Project <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>   
-      </>
-    )}
         
         <div className="button-group">
   {step > 1 && (
     <button onClick={() => setStep(step - 1)} className="nav-button"> <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back</button>
   )}
-  {step < 5 ? (
+  {step < 4 ? (
     <button onClick={() => setStep(step + 1)} className="nav-button">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
   ) : 
        <button onClick={()=> handleDownloadPDF()}  className="download-button">Download PDF <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon></button>
   }
 </div>
       </div>
+<div className="container-printable" ref={componentRef}>
+    <header>
+      <h1>{formData.name}</h1>
+      <p>Email: {formData.email} | Phone: {formData.phone} | {formData.address}</p>
+      <p>LinkedIn: linkedin.com/in/johndoe | Portfolio: johndoe.dev</p>
+    </header>
 
-      <div
-        id="printable-section"
-        ref={componentRef}
-        className="printable-section" 
-      >
-        <div className="left-sidebar">
-          <div className="profile-header">
-            <h1 className="full-name">{formData.name}</h1>
-            <p className="role-title">{formData.title}</p>
-          </div>
-
-          <div className="section">
-            <h2>CONTACT</h2>
-            <p>{formData.phone}</p>
-            <p>{formData.email}</p>
-            <p>{formData.address}</p>
-          </div>
-          <div className="section">
-        <h2>EDUCATION</h2>
-        {
-          formData.education.map((edu, index) => (
-            <p key={index}>
-              <strong>{edu.degree}</strong><br/>
-              {edu.institute}<br/>
-              <small>{edu.startDate} - {edu.endDate}</small>
-            </p>
-          ))
+    <div className="section">
+      <div className="section-title">Professional Summary</div>
+      <p>{formData.summary}</p>
+    </div>
+    <div className="section">
+      <div className="section-title">{fresher === "Projects" ? "Projects" : "Work Experience"}</div>
+      {
+        formData.experience.map((exp)=>{
+        return <div className={"item "+(fresher === "Projects" ? "hidden" : "block")}>
+        <div className={"item-title clearfix "}>
+          {exp.role} - {exp.company}
+          <span className="date">{startDate} – {endDate}</span>
+        </div>
+        <div className="item-subtitle">New York, NY</div>
+      </div>  
         }
+        )
+      }
+      {
+        formData.projects.map((project)=>{
+          return <div className={"item "+(fresher === "Projects" ? "block" : "hidden")}>
+          <div className="">
+            <span className="font-black">{project.projectName}</span>
+            <p>{project.projectDesc}</p>             
+            <a href="#" className="underline">{project.projectLink}</a>             
+          </div>
+          {/* <div className="item-subtitle">New York, NY</div> */}
+        </div>  
+          }
+          )
+      }
 
-        {/* <p><strong>2029 - 2030</strong><br/>Wardiere University<br/><small>Master of Business Management</small></p>
-        <p><strong>2025 - 2029</strong><br/>Wardiere University<br/><small>Bachelor of Business, GPA: 3.8 / 4.0</small></p> */}
+
+      {/* <div className="item">
+        <div className="item-title clearfix">
+          Frontend Developer - ABC Tech
+          <span className="date">Jan 2021 – Present</span>
+        </div>
+        <div className="item-subtitle">New York, NY</div>
+        <ul>
+          <li>Developed and maintained responsive user interfaces using React and TypeScript.</li>
+          <li>Optimized performance and accessibility, reducing page load time by 30%.</li>
+          <li>Collaborated with backend teams to integrate RESTful APIs.</li>
+        </ul>
       </div>
 
-          <div className="section">
-            <h2>SKILLS</h2>
-            {
-              formData.skills.map((skill, index) => (
-                <p key={index}>{skill.skill}</p>
-              ))
-            }
-            
-          </div>
-
-          <div className="section">
-            <h2>LANGUAGES</h2>
-            {
-              formData.languages.map((lang,key)=>(
-                  <p>{lang.language}</p>    
-              ))
-            }
-          </div>
+      <div className="item">
+        <div className="item-title clearfix">
+          Web Developer - XYZ Solutions
+          <span className="date">Jun 2018 – Dec 2020</span>
         </div>
+        <div className="item-subtitle">San Francisco, CA</div>
+        <ul>
+          <li>Created and maintained company websites using HTML, CSS, and JavaScript.</li>
+          <li>Improved UX/UI design, increasing user engagement by 40%.</li>
+        </ul>
+      </div> */}
+    </div>
 
-        <div className="right-content">
-          <div className="section">
-            <h2>PROFILE</h2>
-            <p>{formData.summary}</p>
+    <div className="section">
+      <div className="section-title">Education</div>
+      {
+        formData.education.map((edu)=>{
+          return <div className="item">
+          <div className="item-title clearfix">
+            {edu.degree} in {edu.field}
+            <span className="date">{edu.startDate} – {edu.endDate}</span>
           </div>
-
-          <div className="section">
-            <h2>WORK EXPERIENCE</h2>
-            <div className="job">
-              {
-                formData.experience.map((job,key)=>
-                  {
-                    return <><span className="font-bold">{job.role}</span><br></br>
-                    <span>{job.company}</span><br></br>
-                    <span>{job.startDate} - {job.endDate}</span><br></br><br></br></>
-                })
-              }
-            </div>
-            {/* <div className="job">
-              <p>
-                <strong>Fauget Studio</strong>
-                <br />
-                <em>Marketing Manager & Specialist (2025 - 2029)</em>
-              </p>
-              <ul>
-                <li>Manage the marketing budget efficiently.</li>
-                <li>Analyze market trends and customer needs.</li>
-                <li>Ensure brand consistency across channels.</li>
-              </ul>
-            </div>
-            <div className="job">
-              <p>
-                <strong>Studio Shodwe</strong>
-                <br />
-                <em>Marketing Manager & Specialist (2024 - 2025)</em>
-              </p>
-              <ul>
-                <li>Develop relationships with partners and agencies.</li>
-                <li>Maintain brand consistency across channels.</li>
-              </ul>
-            </div> */}
-          </div>
-
-          <div className="section">
-            <h2>PROJECTS</h2>
-            <div className="references">
-              {
-                formData.projects.map((project,key)=>(
-                 <>
-                  <strong>{project.projectName}</strong><br></br>
-                  <p>{project.projectDesc}</p>
-                  <a href={project.projectLink}>{project.projectLink}</a>
-                 </>
-                )
-                  )
-              }
-              {/* <div>
-                <p>
-                  <strong>Youtube Clone</strong>
-                  <br />
-                  <span>Wardiere Inc. / CTO</span>
-                </p>
-              </div> */}
-              
-            </div>
-          </div>
+          <div className="item-subtitle">{edu.institute}</div>
         </div>
-      </div>
+        }
+        )
+      }
+    </div>
+
+    <div className="section">
+      <div className="section-title">Skills</div>
+      <p>{formData.skills.map((skill)=>{
+        return <><span>{skill.skill}</span> | </>
+      })}</p>
+    </div>
+
+    <div className="section">
+      <div className="section-title">Certifications</div>
+      <p>Certified Frontend Developer – Coursera, 2022</p>
+    </div>
+  </div>
     </div>
   );
 }
