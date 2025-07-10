@@ -1,7 +1,4 @@
 import React, { useRef } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import MyComponentToPrint from './components/MyComponentToPrint';
 import ResumeBuilder from './components/ResumeBuilder';
 
 
