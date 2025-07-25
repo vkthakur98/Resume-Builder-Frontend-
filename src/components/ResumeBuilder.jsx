@@ -31,6 +31,7 @@ export default function ResumeBuilder({ handlePrint }) {
   const [projectDesc,setProjectDesc] = useState("");
   const [projectLink,setProjectLink] = useState("");
   const [fresher, setFresher] = useState("Experience");
+  const [errors, setErrors] = useState('');
 
   
   const [formData, setFormData] = useState({
@@ -128,8 +129,32 @@ export default function ResumeBuilder({ handlePrint }) {
     console.log(formData.projects);
   };
 
+  const validate = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.title.trim()) newErrors.title = 'Title is required';
+    if (!formData.phone.trim()) newErrors.title = 'Phone is required';
+    if (!formData.address.trim()) newErrors.title = 'Address is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleNextStep = () => {
+    if (validate()) {
+      console.log('Proceeding to next step:', formData);
+      setStep(step + 1);
+    }
   };
 
   return (
@@ -138,6 +163,25 @@ export default function ResumeBuilder({ handlePrint }) {
       {step === 1 && (
       <>
       <h1 className="text-[20px] font-bold mb-4">Personal Information</h1>
+      {['name','title','email','phone','address'].map((field) => (
+        <div>
+          <label className="mb-2">{field}</label>
+          <div>
+            <input
+              className="input"
+              name={field}
+              placeholder={field}
+              onChange={handleChange}
+              required
+            />
+            {errors[field] && <p className="text-red-500 mt-[-10px]">{errors[field]}</p>}
+          </div>
+        </div>
+      ))}
+      </>)}
+      {/* {step === 2 && (
+      <>
+      <h1 className="text-[20px] font-bold mb-4">Professional Information</h1>
       <label>Full Name</label>
       <div>
       <input
@@ -147,6 +191,7 @@ export default function ResumeBuilder({ handlePrint }) {
           onChange={handleChange}
           required
         />
+        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
       </div>
     <label className="mb-2"> Job Title</label>
     <div>
@@ -157,6 +202,7 @@ export default function ResumeBuilder({ handlePrint }) {
           onChange={handleChange}
           required
         />
+        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
     </div>
 
     <label className="mb-2"> Email</label>
@@ -168,6 +214,7 @@ export default function ResumeBuilder({ handlePrint }) {
           onChange={handleChange}
           required
         />
+        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
     </div>
      <label className="mb-2"> Phone</label>
      <div>
@@ -178,6 +225,7 @@ export default function ResumeBuilder({ handlePrint }) {
           onChange={handleChange}
           required
         />
+        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
      </div>
      <label className="mb-[30px]"> Address</label>
      <div>
@@ -188,9 +236,10 @@ export default function ResumeBuilder({ handlePrint }) {
           onChange={handleChange}
           required
         />
+        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
      </div>  
       </>
-    )}
+    )} */}
 
     {step === 2 && (
       <>
@@ -284,7 +333,7 @@ export default function ResumeBuilder({ handlePrint }) {
     <button onClick={() => setStep(step - 1)} className="nav-button"> <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back</button>
   )}
   {step < 4 ? (
-    <button onClick={() => setStep(step + 1)} className="nav-button">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
+    <button onClick={() => handleNextStep()} className="nav-button">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
   ) : 
        <button onClick={()=> handleDownloadPDF()}  className="download-button">Download PDF <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon></button>
   }
@@ -305,7 +354,7 @@ export default function ResumeBuilder({ handlePrint }) {
       <div className="section-title">{fresher === "Projects" ? "Projects" : "Work Experience"}</div>
       {
         formData.experience.map((exp)=>{
-        return <div className={"item "+(fresher === "Projects" ? "hidden" : "block")}>
+        return <div className={"item "+(fresher === "Projects" ? "hidden" : "block")} key={exp}>
         <div className={"item-title clearfix "}>
           {exp.role} - {exp.company}
           <span className="date">{startDate} – {endDate}</span>
@@ -375,13 +424,13 @@ export default function ResumeBuilder({ handlePrint }) {
     <div className="section">
       <div className="section-title">Skills</div>
       <p>{formData.skills.map((skill)=>{
-        return <><span>{skill.skill}</span> | </>
+        return <span>{skill.skill} |</span>
       })}</p>
     </div>
 
     <div className="section">
-      <div className="section-title">Certifications</div>
-      <p>Certified Frontend Developer – Coursera, 2022</p>
+      <div className="section-title">Languages</div>
+      <p></p>
     </div>
   </div>
     </div>
