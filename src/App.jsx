@@ -1,6 +1,7 @@
 import React from 'react';
 import  { useRef } from 'react';
 import ResumeBuilder from './components/ResumeBuilder';
+import Logo from "./logo/Logo.png"
 
 
 function App() {
@@ -8,7 +9,7 @@ function App() {
   return (
     <div className="App">
       <div className='bg-[#1E3A8A] text-white p-4'>
-      <h1 className="text-2xl font-bold mb-4">Resume Builder</h1>
+      <img src={Logo} height={150} width={120} ></img>
       </div>
         <ResumeBuilder ></ResumeBuilder>
     </div>
