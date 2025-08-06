@@ -112,6 +112,7 @@ export default function ResumeBuilder({ handlePrint }) {
       skills: [...formData.skills, {skill: skill}],
     });
     console.log(formData.skills);
+
   };
 
   const handleAddLanguage = () => {
@@ -357,9 +358,9 @@ export default function ResumeBuilder({ handlePrint }) {
         return <div className={"item "+(fresher === "Projects" ? "hidden" : "block")} key={exp}>
         <div className={"item-title clearfix "}>
           {exp.role} - {exp.company}
-          <span className="date">{startDate} – {endDate}</span>
+          {/* <span className="date">{startDate} – {endDate}</span> */}
         </div>
-        <div className="item-subtitle">New York, NY</div>
+        <span className="date">{startDate} – {endDate}</span>
       </div>  
         }
         )
@@ -424,7 +425,7 @@ export default function ResumeBuilder({ handlePrint }) {
     <div className="section">
       <div className="section-title">Skills</div>
       <p>{formData.skills.map((skill)=>{
-        return <span>{skill.skill} |</span>
+        return <span>{skill.skill} | </span>
       })}</p>
     </div>
 
