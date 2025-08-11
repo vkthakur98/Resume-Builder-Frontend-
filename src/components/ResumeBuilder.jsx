@@ -349,10 +349,12 @@ export default function ResumeBuilder({ handlePrint }) {
 
     <div className="section">
       <div className="section-title">Professional Summary</div>
+      <hr></hr>
       <p>{formData.summary}</p>
     </div>
     <div className="section">
       <div className="section-title">{fresher === "Projects" ? "Projects" : "Work Experience"}</div>
+      <hr></hr>
       {
         formData.experience.map((exp)=>{
         return <div className={"item "+(fresher === "Projects" ? "hidden" : "block")} key={exp}>
@@ -408,6 +410,7 @@ export default function ResumeBuilder({ handlePrint }) {
 
     <div className="section">
       <div className="section-title">Education</div>
+      <hr></hr>
       {
         formData.education.map((edu)=>{
           return <div className="item">
@@ -424,6 +427,7 @@ export default function ResumeBuilder({ handlePrint }) {
 
     <div className="section">
       <div className="section-title">Skills</div>
+      <hr></hr>
       <p>{formData.skills.map((skill)=>{
         return <span>{skill.skill} | </span>
       })}</p>
