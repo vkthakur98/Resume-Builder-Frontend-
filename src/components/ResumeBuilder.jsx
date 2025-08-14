@@ -54,7 +54,7 @@ export default function ResumeBuilder({ handlePrint }) {
     const res = await fetch("https://resume-builder-backend-2-wn34.onrender.com/generate-summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobTitle: formData.title }),
+      body: JSON.stringify({ jobTitle: formData.title, company: formData.experience.company }),
     });
 
     const data = await res.json();
@@ -111,8 +111,7 @@ export default function ResumeBuilder({ handlePrint }) {
       ...formData,
       skills: [...formData.skills, {skill: skill}],
     });
-    console.log(formData.skills);
-
+    setSkill("");    
   };
 
   const handleAddLanguage = () => {
@@ -120,6 +119,7 @@ export default function ResumeBuilder({ handlePrint }) {
       ...formData,
       languages: [...formData.languages, {language: lang}],
     });
+    console.log(formData.languages);
   };
 
   const handleAddProject = () => {
@@ -244,26 +244,7 @@ export default function ResumeBuilder({ handlePrint }) {
 
     {step === 2 && (
       <>
-      <h1 className="text-[20px] font-bold mb-4">Professional Background</h1>
-      <textarea
-  className="input h-[200px]"
-  value={formData.summary}
-  name="summary"
-  maxLength={600} // Set your desired max character limit
-  placeholder="Professional Summary"
-  onChange={handleChange}
-/>
-<div className="text-right text-sm text-gray-500 mt-[-20px]">
-  {formData.summary.length} / 1000
-</div>
-
-          <button
-        onClick={handleGenerateAI}
-        disabled={loading}
-        className="px-4 py-2 rounded bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-      >
-        {loading ? "Generating..." : "Generate with AI ✨"}
-      </button>
+      <h1 className="text-[20px] font-bold mb-4">Professional Background</h1> 
       <div className="flex justify-between items-center">
         <h1 className="text-[18px] mt-4 mb-4">{fresher}</h1> 
       <Switch fresher={fresher} setFresher={setFresher}></Switch>
@@ -296,6 +277,25 @@ export default function ResumeBuilder({ handlePrint }) {
       <input className="input" name="project-link" placeholder="Project Link" onChange={(e) => setProjectLink(e.target.value)} /><br></br>
       <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddProject()} >Add Project <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>   
         </div>
+        <textarea
+  className="input h-[200px]"
+  value={formData.summary}
+  name="summary"
+  maxLength={600} // Set your desired max character limit
+  placeholder="Professional Summary"
+  onChange={handleChange}
+/>
+<div className="text-right text-sm text-gray-500 mt-[-20px]">
+  {formData.summary.length} / 1000
+</div>
+
+          <button
+        onClick={handleGenerateAI}
+        disabled={loading}
+        className="px-4 py-2 rounded bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+      >
+        {loading ? "Generating..." : "Generate with AI ✨"}
+      </button>
       </>
     )}
     {step === 3 && (
@@ -319,7 +319,7 @@ export default function ResumeBuilder({ handlePrint }) {
     {step === 4 && (
       <>
       <h1 className="text-[20px] font-bold mb-4">Skills</h1>
-      <input className="input" name="skills" placeholder="Skills" onChange={(e) => setSkill(e.target.value)} /><br></br>
+      <input className="input" name="skills" value={skill} placeholder="Skills" onChange={(e) => setSkill(e.target.value)} /><br></br>
       <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddSkill()} >Add Skill <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
       <br></br>
       <br></br>
