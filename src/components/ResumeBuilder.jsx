@@ -54,7 +54,7 @@ export default function ResumeBuilder({ handlePrint }) {
     const res = await fetch("https://resume-builder-backend-2-wn34.onrender.com/generate-summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobTitle: formData.title, company: formData.experience.company }),
+      body: JSON.stringify({ jobTitle: formData.title, company: fresher === "Experience" ? formData.experience[0].company : formData.projects[0].projectName }),
     });
 
     const data = await res.json();
@@ -120,6 +120,7 @@ export default function ResumeBuilder({ handlePrint }) {
       languages: [...formData.languages, {language: lang}],
     });
     console.log(formData.languages);
+    setLang("");
   };
 
   const handleAddProject = () => {
@@ -324,7 +325,7 @@ export default function ResumeBuilder({ handlePrint }) {
       <br></br>
       <br></br>
       <h1 className="text-[20px] font-bold mb-4">Languages</h1>
-      <input className="input" name="languages" placeholder="Languages" onChange={(e) => setLang(e.target.value)} /><br></br>
+      <input className="input" name="languages" placeholder="Languages" value={lang} onChange={(e) => setLang(e.target.value)} /><br></br>
       <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddLanguage()} >Add Language</button>
       </>
     )}
@@ -435,7 +436,10 @@ export default function ResumeBuilder({ handlePrint }) {
 
     <div className="section">
       <div className="section-title">Languages</div>
-      <p></p>
+      <hr></hr>
+      <p>{formData.languages.map((lang)=>{
+        return <span>{lang.language} | </span>
+      })}</p>
     </div>
   </div>
     </div>
