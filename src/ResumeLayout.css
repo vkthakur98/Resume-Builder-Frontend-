@@ -4,7 +4,7 @@
   gap: 30px;
   padding: 20px;
   background: #f8f9fa;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; */
 }
 
 /* Left Section - Form */
@@ -23,6 +23,8 @@
   width: 100%;
   max-width: 750px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
 }
 
 /* Input Fields */
@@ -92,7 +94,13 @@ header {
 header h1 {
   font-size: 28px;
   font-weight: bold;
-  margin-bottom: 8px;
+  text-align: center;
+}
+
+header h2 {
+  font-size: 17px;
+  text-align: center;
+  margin-top:-10px;
 }
 
 header p {

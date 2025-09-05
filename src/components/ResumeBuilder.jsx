@@ -18,6 +18,8 @@ export default function ResumeBuilder({ handlePrint }) {
   const [step, setStep] = useState(1);
   const [exprole,setExprole] = useState("");
   const [company,setCompany] = useState("");
+  const [startDateExp,setstartDateExp] = useState("");
+  const [endDateExp,setendDateExp] = useState("");
   const [startDate,setstartDate] = useState("");
   const [endDate,setendDate] = useState("");
   const [eduDegree,setEduDegree] = useState("");
@@ -32,6 +34,7 @@ export default function ResumeBuilder({ handlePrint }) {
   const [projectLink,setProjectLink] = useState("");
   const [fresher, setFresher] = useState("Experience");
   const [errors, setErrors] = useState('');
+  const [expDuration, setExpDuration] = useState('');
 
   
   const [formData, setFormData] = useState({
@@ -67,13 +70,36 @@ export default function ResumeBuilder({ handlePrint }) {
   }
 };
 
+
+
   const dateFormat = (date) => {
     const options = { year: "numeric", month: "long" };
     let x =  new Date(date).toLocaleDateString(undefined, options);
-    console.log(x);
     return x;
   };
 
+  const showExperienceTime = (startDateExp, endDateExp) => {
+  const startDate = new Date(startDateExp);
+  const endDate = new Date(endDateExp);
+
+  let years = endDate.getFullYear() - startDate.getFullYear();
+  let months = endDate.getMonth() - startDate.getMonth();
+
+  // Adjust if end month is before start month
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  const yearStr = years > 0 ? `${years} year${years > 1 ? 's' : ''}` : '';
+  const monthStr = months > 0 ? `${months} month${months > 1 ? 's' : ''}` : '';
+
+  const result = [yearStr, monthStr].filter(Boolean).join(' ');
+
+  // console.log(result || '0 months'); // fallback if no duration
+  setExpDuration(result || '0 months');
+  console.log(expDuration);
+}
 
 
   const handleDownloadPDF = async () => {
@@ -96,6 +122,7 @@ export default function ResumeBuilder({ handlePrint }) {
       ...formData,
       experience: [...formData.experience, { role:exprole, company: company, startDate: startDate, endDate: endDate }],
     });
+    showExperienceTime(startDate, endDate);
   };
 
   const handleAddEducation = () => {
@@ -261,11 +288,11 @@ export default function ResumeBuilder({ handlePrint }) {
         </div>
         <label>Start Date</label>
         <div>
-        <input type="date" className="input" name="start date" placeholder="Start Date" onChange={(e)=> setstartDate(dateFormat(e.target.value))} />
+        <input type="date" className="input" name="start date" placeholder="Start Date" onChange={(e)=>{setstartDate(dateFormat(e.target.value)); setstartDateExp(e.target.value)} } />
         </div>
         <label>End Date</label>
         <div>
-        <input type="date" className="input" name="end date" placeholder="End Date" onChange={(e)=> setendDate(dateFormat(e.target.value))} />
+        <input type="date" className="input" name="end date" placeholder="End Date" onChange={(e)=>{setendDate(dateFormat(e.target.value)); setendDateExp(e.target.value)} } />
         <br></br><input type="checkbox" onChange={(e) => false?"":setendDate("Present") } /> Currently working here
         </div>
         {/* <input className="input" name="skills" placeholder="Skills" onChange={handleChange} /> */}
@@ -344,6 +371,7 @@ export default function ResumeBuilder({ handlePrint }) {
 <div className="container-printable" ref={componentRef}>
     <header>
       <h1>{formData.name}</h1>
+      <h2>{"("+formData.title+")"}</h2>
       <p>Email: {formData.email} | Phone: {formData.phone} | {formData.address}</p>
       <p>LinkedIn: linkedin.com/in/johndoe | Portfolio: johndoe.dev</p>
     </header>
@@ -360,10 +388,10 @@ export default function ResumeBuilder({ handlePrint }) {
         formData.experience.map((exp)=>{
         return <div className={"item "+(fresher === "Projects" ? "hidden" : "block")} key={exp}>
         <div className={"item-title clearfix "}>
-          {exp.role} - {exp.company}
+          {`${exp.role} - ${exp.company}`}  
           {/* <span className="date">{startDate} – {endDate}</span> */}
         </div>
-        <span className="date">{startDate} – {endDate}</span>
+        <span className="date">{startDate} – {endDate}{'('+expDuration+')'}</span>
       </div>  
         }
         )
