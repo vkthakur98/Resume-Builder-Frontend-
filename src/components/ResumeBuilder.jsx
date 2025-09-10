@@ -6,43 +6,44 @@ import { useRef } from "react";
 import html2canvas from "html2canvas";
 import "../ResumeLayout.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight,faArrowLeft,faDownload,faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faArrowLeft, faDownload, faPlus } from '@fortawesome/free-solid-svg-icons';
 import Switch from "./Switch";
-
-
 
 export default function ResumeBuilder({ handlePrint }) {
   const componentRef = useRef(null);
-  const [profileText, setProfileText] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const [exprole,setExprole] = useState("");
-  const [company,setCompany] = useState("");
-  const [startDateExp,setstartDateExp] = useState("");
-  const [endDateExp,setendDateExp] = useState("");
-  const [startDate,setstartDate] = useState("");
-  const [endDate,setendDate] = useState("");
-  const [eduDegree,setEduDegree] = useState("");
-  const [eduField,setEduField] = useState("");
-  const [eduInstitute,setEduInstitute] = useState("");
-  const [eduStartDate,setEduStartDate] = useState("");
-  const [eduEndDate,setEduEndDate] = useState("");
-  const [skill,setSkill] = useState("");
-  const [lang,setLang] = useState("");
-  const [projectName,setProjectName]  = useState("");
-  const [projectDesc,setProjectDesc] = useState("");
-  const [projectLink,setProjectLink] = useState("");
   const [fresher, setFresher] = useState("Experience");
   const [errors, setErrors] = useState('');
-  const [expDuration, setExpDuration] = useState('');
 
-  
+  // Optimized state variables:
+  const [formInput, setFormInput] = useState({
+    exprole: "",
+    company: "",
+    startDateExp: "",
+    endDateExp: "",
+    startDate: "",
+    endDate: "",
+    eduDegree: "",
+    eduField: "",
+    eduInstitute: "",
+    eduStartDate: "",
+    eduEndDate: "",
+    skill: "",
+    lang: "",
+    projectName: "",
+    projectDesc: "",
+    projectLink: "",
+  });
+
   const [formData, setFormData] = useState({
     name: "",
     title: "",
     email: "",
     phone: "",
     address: "",
+    linkedin: "",
+    portfolio: "",
     summary: "",
     experience: [],
     education: [],
@@ -52,55 +53,54 @@ export default function ResumeBuilder({ handlePrint }) {
   });
 
   const handleGenerateAI = async () => {
-  setLoading(true);
-  try {
-    const res = await fetch("https://resume-builder-backend-2-wn34.onrender.com/generate-summary", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobTitle: formData.title, company: fresher === "Experience" ? formData.experience[0].company : formData.projects[0].projectName, experience: fresher === "Experience" ? formData.experience : null }),
-    });
+    setLoading(true);
+    try {
+      const res = await fetch("https://resume-builder-backend-2-wn34.onrender.com/generate-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle: formData.title,
+          company: fresher === "Experience" ? formData.experience[0]?.company : formData.projects[0]?.projectName,
+          experience: fresher === "Experience" ? formData.experience : null
+        }),
+      });
 
-    const data = await res.json();
-    console.log(data)
-    setFormData(prev => ({ ...prev, summary: data.summary }));
-  } catch (err) {
-    console.error("Error generating summary:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, summary: data.summary }));
+    } catch (err) {
+      console.error("Error generating summary:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const dateFormat = (date) => {
+    if (!date) return "";
     const options = { year: "numeric", month: "long" };
-    let x =  new Date(date).toLocaleDateString(undefined, options);
+    let x = new Date(date).toLocaleDateString(undefined, options);
     return x;
   };
 
   const showExperienceTime = (startDateExp, endDateExp) => {
-  const startDate = new Date(startDateExp);
-  const endDate = new Date(endDateExp);
+    if(endDateExp === new Date().toISOString().split('T')[0]) return 'Currently Working';
+    const startDate = new Date(startDateExp);
+    const endDate = new Date(endDateExp);
 
-  let years = endDate.getFullYear() - startDate.getFullYear();
-  let months = endDate.getMonth() - startDate.getMonth();
+    let years = endDate.getFullYear() - startDate.getFullYear();
+    let months = endDate.getMonth() - startDate.getMonth();
 
-  // Adjust if end month is before start month
-  if (months < 0) {
-    years -= 1;
-    months += 12;
-  }
+    if (months < 0) {
+      years -= 1;
+      months += 12;
+    }
 
-  const yearStr = years > 0 ? `${years} year${years > 1 ? 's' : ''}` : '';
-  const monthStr = months > 0 ? `${months} month${months > 1 ? 's' : ''}` : '';
+    const yearStr = years > 0 ? `${years} year${years > 1 ? 's' : ''}` : '';
+    const monthStr = months > 0 ? `${months} month${months > 1 ? 's' : ''}` : '';
 
-  const result = [yearStr, monthStr].filter(Boolean).join(' ');
+    const result = [yearStr, monthStr].filter(Boolean).join(' ');
 
-  // console.log(result || '0 months'); // fallback if no duration
-  setExpDuration(result || '0 months');
-  console.log(expDuration);
-}
-
+    return result || 'Currently Working';
+  };
 
   const handleDownloadPDF = async () => {
     const element = componentRef.current;
@@ -118,44 +118,77 @@ export default function ResumeBuilder({ handlePrint }) {
   };
 
   const handleAddExperience = () => {
+    const { exprole, company, startDateExp, endDateExp } = formInput;
+    if (!exprole || !company || !startDateExp) {
+      alert("Please fill all fields to add experience.");
+      return;
+    }
+    const temp_exp = showExperienceTime(startDateExp, endDateExp);
     setFormData({
       ...formData,
-      experience: [...formData.experience, { role:exprole, company: company, startDate: startDate, endDate: endDate }],
+      experience: [...formData.experience, {
+        role: exprole,
+        company: company,
+        startDate: dateFormat(startDateExp),
+        endDate: dateFormat(endDateExp),
+        duration: temp_exp
+      }],
     });
-    showExperienceTime(startDate, endDate);
+    setFormInput(prev => ({ ...prev, exprole: "", company: "", startDateExp: "", endDateExp: "" }));
   };
 
   const handleAddEducation = () => {
+    const { eduDegree, eduField, eduInstitute, eduStartDate, eduEndDate } = formInput;
+    if (!eduDegree || !eduInstitute) {
+      alert("Please fill all fields to add education.");
+      return;
+    }
     setFormData({
       ...formData,
-      education: [...formData.education, { degree: eduDegree, field: eduField, institute: eduInstitute, startDate: eduStartDate, endDate: eduEndDate }],
+      education: [...formData.education, {
+        degree: eduDegree,
+        field: eduField,
+        institute: eduInstitute,
+        startDate: dateFormat(eduStartDate),
+        endDate: dateFormat(eduEndDate)
+      }],
     });
-    console.log(formData.education);
+    setFormInput(prev => ({ ...prev, eduDegree: "", eduField: "", eduInstitute: "", eduStartDate: "", eduEndDate: "" }));
   };
 
   const handleAddSkill = () => {
+    if (!formInput.skill) return;
     setFormData({
       ...formData,
-      skills: [...formData.skills, {skill: skill}],
+      skills: [...formData.skills, { skill: formInput.skill }],
     });
-    setSkill("");    
+    setFormInput(prev => ({ ...prev, skill: "" }));
   };
 
   const handleAddLanguage = () => {
+    if (!formInput.lang) return;
     setFormData({
       ...formData,
-      languages: [...formData.languages, {language: lang}],
+      languages: [...formData.languages, { language: formInput.lang }],
     });
-    console.log(formData.languages);
-    setLang("");
+    setFormInput(prev => ({ ...prev, lang: "" }));
   };
 
   const handleAddProject = () => {
+    const { projectName, projectDesc, projectLink } = formInput;
+    if (!projectName) {
+      alert("Project name is required.");
+      return;
+    }
     setFormData({
       ...formData,
-      projects: [...formData.projects, {projectName: projectName, projectDesc: projectDesc, projectLink:  projectLink}],
+      projects: [...formData.projects, {
+        projectName: projectName,
+        projectDesc: projectDesc,
+        projectLink: projectLink
+      }],
     });
-    console.log(formData.projects);
+    setFormInput(prev => ({ ...prev, projectName: "", projectDesc: "", projectLink: "" }));
   };
 
   const validate = () => {
@@ -163,8 +196,8 @@ export default function ResumeBuilder({ handlePrint }) {
 
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.phone.trim()) newErrors.title = 'Phone is required';
-    if (!formData.address.trim()) newErrors.title = 'Address is required';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -186,290 +219,219 @@ export default function ResumeBuilder({ handlePrint }) {
     }
   };
 
+  const handleFormInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormInput(prev => ({ ...prev, [name]: value }));
+  };
+
   return (
     <div className="container">
       <div className="form-section w-[650px] h-[90vh] overflow-y-scroll">
-      {step === 1 && (
-      <>
-      <h1 className="text-[20px] font-bold mb-4">Personal Information</h1>
-      {['name','title','email','phone','address'].map((field) => (
-        <div>
-          <label className="mb-2">{field}</label>
-          <div>
-            <input
-              className="input"
-              name={field}
-              placeholder={field}
+        {step === 1 && (
+          <>
+            <h1 className="text-[20px] font-bold mb-4">Personal Information</h1>
+            {['name', 'title', 'email', 'phone', 'address', 'linkedin','portfolio'].map((field) => (
+              <div key={field}>
+                <label className="mb-2">{field}</label>
+                <div>
+                  <input
+                    className="input"
+                    name={field}
+                    placeholder={field}
+                    onChange={handleChange}
+                    required
+                  />
+                  {errors[field] && <p className="text-red-500 mt-[-10px]">{errors[field]}</p>}
+                </div>
+              </div>
+            ))}
+          </>)}
+
+        {step === 2 && (
+          <>
+            <h1 className="text-[20px] font-bold mb-4">Professional Background</h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-[18px] mt-4 mb-4">{fresher}</h1>
+              <Switch fresher={fresher} setFresher={setFresher}></Switch>
+            </div>
+            <div className={fresher === "Experience" ? "block" : "hidden"}>
+              <label>Role</label>
+              <div>
+                <input className="input" name="exprole" placeholder="Role" value={formInput.exprole} onChange={handleFormInputChange} />
+              </div>
+              <label>Company Name</label>
+              <div>
+                <input className="input" name="company" placeholder="Company Name" value={formInput.company} onChange={handleFormInputChange} />
+              </div>
+              <label>Start Date</label>
+              <div>
+                <input type="date" className="input" name="startDateExp" placeholder="Start Date" value={formInput.startDateExp} onChange={handleFormInputChange} />
+              </div>
+              <label>End Date</label>
+              <div>
+                <input type="date" className="input" name="endDateExp" placeholder="End Date" value={formInput.endDateExp} onChange={handleFormInputChange} />
+                <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, endDateExp: new Date().toISOString().split('T')[0] })) : setFormInput(prev => ({ ...prev, endDateExp: "" }))} /> Currently working here
+              </div>
+              <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddExperience} >Add Experience <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
+            </div>
+            <div className={fresher === "Projects" ? "block" : "hidden"}>
+              <input className="input" name="projectName" placeholder="Your project name" value={formInput.projectName} onChange={handleFormInputChange} /><br></br>
+              <textarea className="input" maxLength={1000} placeholder="Describe your project, write about tech stack etc." value={formInput.projectDesc} onChange={handleFormInputChange}></textarea>
+              <input className="input" name="projectLink" placeholder="Project Link" value={formInput.projectLink} onChange={handleFormInputChange} /><br></br>
+              <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddProject} >Add Project <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
+            </div>
+            <textarea
+              className="input h-[200px]"
+              value={formData.summary}
+              name="summary"
+              maxLength={600}
+              placeholder="Professional Summary"
               onChange={handleChange}
-              required
             />
-            {errors[field] && <p className="text-red-500 mt-[-10px]">{errors[field]}</p>}
-          </div>
-        </div>
-      ))}
-      </>)}
-      {/* {step === 2 && (
-      <>
-      <h1 className="text-[20px] font-bold mb-4">Professional Information</h1>
-      <label>Full Name</label>
-      <div>
-      <input
-          className="input"
-          name="name"
-          placeholder="Full Name"
-          onChange={handleChange}
-          required
-        />
-        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
-      </div>
-    <label className="mb-2"> Job Title</label>
-    <div>
-    <input
-          className="input"
-          name="title"
-          placeholder="Job Title"
-          onChange={handleChange}
-          required
-        />
-        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
-    </div>
+            <div className="text-right text-sm text-gray-500 mt-[-20px]">
+              {formData.summary.length} / 1000
+            </div>
 
-    <label className="mb-2"> Email</label>
-    <div>
-        <input
-          className="input"
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
-          required
-        />
-        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
-    </div>
-     <label className="mb-2"> Phone</label>
-     <div>
-        <input
-          className="input"
-          name="phone"
-          placeholder="Phone"
-          onChange={handleChange}
-          required
-        />
-        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
-     </div>
-     <label className="mb-[30px]"> Address</label>
-     <div>
-        <input
-          className="input"
-          name="address"
-          placeholder="Address"
-          onChange={handleChange}
-          required
-        />
-        {errors && <p className="text-red-500 mt-[-10px]">{errors}</p>}
-     </div>  
-      </>
-    )} */}
+            <button
+              onClick={handleGenerateAI}
+              disabled={loading}
+              className="px-4 py-2 rounded bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? "Generating..." : "Generate with AI ✨"}
+            </button>
+          </>
+        )}
+        {step === 3 && (
+          <>
+            <h1 className="text-[20px] font-bold mb-4">Education</h1>
+            <h1>Degree/Certification</h1>
+            <input className="input" name="eduDegree" placeholder="higher qualification" value={formInput.eduDegree} onChange={handleFormInputChange} />
+            <h1>Field Of Study</h1>
+            <input className="input" name="eduField" placeholder="field of study" value={formInput.eduField} onChange={handleFormInputChange} />
+            <h1>Institution</h1>
+            <input className="input" name="eduInstitute" placeholder="institution" value={formInput.eduInstitute} onChange={handleFormInputChange} />
+            <h1>Start Date</h1>
+            <input className="input" type="date" name="eduStartDate" placeholder="start date" value={formInput.eduStartDate} onChange={handleFormInputChange} />
+            <h1>End Date</h1>
+            <input className="input" type="date" name="eduEndDate" placeholder="end date" value={formInput.eduEndDate} onChange={handleFormInputChange} />
+            <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, eduEndDate: "Currently Pursuing" })) : setFormInput(prev => ({ ...prev, eduEndDate: "" }))} /> Currently pursuing<br></br>
+            <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddEducation} >Add Education <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
+          </>
+        )}
+        {step === 4 && (
+          <>
+            <h1 className="text-[20px] font-bold mb-4">Skills</h1>
+            <input className="input" name="skill" value={formInput.skill} placeholder="Skills" onChange={handleFormInputChange} /><br></br>
+            <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddSkill} >Add Skill <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
+            <br></br>
+            <br></br>
+            <h1 className="text-[20px] font-bold mb-4">Languages</h1>
+            <input className="input" name="lang" placeholder="Languages" value={formInput.lang} onChange={handleFormInputChange} /><br></br>
+            <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddLanguage} >Add Language</button>
+          </>
+        )}
 
-    {step === 2 && (
-      <>
-      <h1 className="text-[20px] font-bold mb-4">Professional Background</h1> 
-      <div className="flex justify-between items-center">
-        <h1 className="text-[18px] mt-4 mb-4">{fresher}</h1> 
-      <Switch fresher={fresher} setFresher={setFresher}></Switch>
-      </div>
-        <div className={fresher === "Experience" ? "block" : "hidden"}>
-        <label>Role</label>
-        <div>
-        <input className="input" name="experience-role" placeholder="Role" onChange={(e)=> setExprole(e.target.value)} />
-        </div>
-        <label>Company Name</label>
-        <div>
-        <input className="input" name="company name" placeholder="Company Name" onChange={(e)=> setCompany(e.target.value)} />
-        </div>
-        <label>Start Date</label>
-        <div>
-        <input type="date" className="input" name="start date" placeholder="Start Date" onChange={(e)=>{setstartDate(dateFormat(e.target.value)); setstartDateExp(e.target.value)} } />
-        </div>
-        <label>End Date</label>
-        <div>
-        <input type="date" className="input" name="end date" placeholder="End Date" onChange={(e)=>{setendDate(dateFormat(e.target.value)); setendDateExp(e.target.value)} } />
-        <br></br><input type="checkbox" onChange={(e) => false?"":setendDate("Present") } /> Currently working here
-        </div>
-        {/* <input className="input" name="skills" placeholder="Skills" onChange={handleChange} /> */}
-        <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddExperience()} >Add Experience <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
-        </div>
-        <div className={fresher === "Projects" ? "block" : "hidden"}>
-      {/* <h1 className="text-[20px] font-bold mb-4">Projects</h1> */}
-      <input className="input" name="project" placeholder="Your project name" onChange={(e) =>setProjectName(e.target.value) } /><br></br>
-      <textarea className="input" maxLength={1000} placeholder="Describe your project, write about tech stack etc." onChange={(e) => setProjectDesc(e.target.value) }></textarea>
-      <input className="input" name="project-link" placeholder="Project Link" onChange={(e) => setProjectLink(e.target.value)} /><br></br>
-      <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddProject()} >Add Project <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>   
-        </div>
-        <textarea
-  className="input h-[200px]"
-  value={formData.summary}
-  name="summary"
-  maxLength={600} // Set your desired max character limit
-  placeholder="Professional Summary"
-  onChange={handleChange}
-/>
-<div className="text-right text-sm text-gray-500 mt-[-20px]">
-  {formData.summary.length} / 1000
-</div>
-
-          <button
-        onClick={handleGenerateAI}
-        disabled={loading}
-        className="px-4 py-2 rounded bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-      >
-        {loading ? "Generating..." : "Generate with AI ✨"}
-      </button>
-      </>
-    )}
-    {step === 3 && (
-      <>
-      <h1 className="text-[20px] font-bold mb-4">Education</h1>
-      <h1>Degree/Certification</h1>
-      <input className="input" name="education" placeholder="higher qualification" onChange={(e)=> setEduDegree(e.target.value)} />
-      <h1>Field Of Study</h1>
-      <input className="input" name="field of study" placeholder="field of study" onChange={(e)=> setEduField(e.target.value)} />
-      <h1>Institution</h1>
-      <input className="input" name="institution" placeholder="institution" onChange={(e)=> setEduInstitute(e.target.value) } />
-      <h1>Start Date</h1>
-      <input className="input" type="date" name="startdate" placeholder="start date" onChange={(e)=> setEduStartDate(dateFormat(e.target.value))} />
-      <h1>End Date</h1>
-      <input className="input" type="date" name="enddate" placeholder="end date" onChange={(e)=> setEduEndDate(dateFormat(e.target.value))} />
-      <br></br><input type="checkbox" onChange={(e) => false?"":setEduEndDate("Currently Pursuing") } /> Currently pursuing<br></br>
-      <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddEducation()} >Add Education <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
-      </>
-      
-    )}
-    {step === 4 && (
-      <>
-      <h1 className="text-[20px] font-bold mb-4">Skills</h1>
-      <input className="input" name="skills" value={skill} placeholder="Skills" onChange={(e) => setSkill(e.target.value)} /><br></br>
-      <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddSkill()} >Add Skill <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
-      <br></br>
-      <br></br>
-      <h1 className="text-[20px] font-bold mb-4">Languages</h1>
-      <input className="input" name="languages" placeholder="Languages" value={lang} onChange={(e) => setLang(e.target.value)} /><br></br>
-      <button className="p-2 rounded bg-blue-600 text-white" onClick={() => handleAddLanguage()} >Add Language</button>
-      </>
-    )}
-        
         <div className="button-group">
-  {step > 1 && (
-    <button onClick={() => setStep(step - 1)} className="nav-button"> <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back</button>
-  )}
-  {step < 4 ? (
-    <button onClick={() => handleNextStep()} className="nav-button">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
-  ) : 
-       <button onClick={()=> handleDownloadPDF()}  className="download-button">Download PDF <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon></button>
-  }
-</div>
-      </div>
-<div className="container-printable" ref={componentRef}>
-    <header>
-      <h1>{formData.name}</h1>
-      <h2>{"("+formData.title+")"}</h2>
-      <p>Email: {formData.email} | Phone: {formData.phone} | {formData.address}</p>
-      <p>LinkedIn: linkedin.com/in/johndoe | Portfolio: johndoe.dev</p>
-    </header>
-
-    <div className="section">
-      <div className="section-title">Professional Summary</div>
-      <hr></hr>
-      <p>{formData.summary}</p>
-    </div>
-    <div className="section">
-      <div className="section-title">{fresher === "Projects" ? "Projects" : "Work Experience"}</div>
-      <hr></hr>
-      {
-        formData.experience.map((exp)=>{
-        return <div className={"item "+(fresher === "Projects" ? "hidden" : "block")} key={exp}>
-        <div className={"item-title clearfix "}>
-          {`${exp.role} - ${exp.company}`}  
-          {/* <span className="date">{startDate} – {endDate}</span> */}
-        </div>
-        <span className="date">{startDate} – {endDate}{'('+expDuration+')'}</span>
-      </div>  
-        }
-        )
-      }
-      {
-        formData.projects.map((project)=>{
-          return <div className={"item "+(fresher === "Projects" ? "block" : "hidden")}>
-          <div className="">
-            <span className="font-black">{project.projectName}</span>
-            <p>{project.projectDesc}</p>             
-            <a href="#" className="underline">{project.projectLink}</a>             
-          </div>
-          {/* <div className="item-subtitle">New York, NY</div> */}
-        </div>  
+          {step > 1 && (
+            <button onClick={() => setStep(step - 1)} className="nav-button"> <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back</button>
+          )}
+          {step < 4 ? (
+            <button onClick={() => handleNextStep()} className="nav-button">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
+          ) :
+            <button onClick={() => handleDownloadPDF()} className="download-button">Download PDF <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon></button>
           }
-          )
-      }
-
-
-      {/* <div className="item">
-        <div className="item-title clearfix">
-          Frontend Developer - ABC Tech
-          <span className="date">Jan 2021 – Present</span>
         </div>
-        <div className="item-subtitle">New York, NY</div>
-        <ul>
-          <li>Developed and maintained responsive user interfaces using React and TypeScript.</li>
-          <li>Optimized performance and accessibility, reducing page load time by 30%.</li>
-          <li>Collaborated with backend teams to integrate RESTful APIs.</li>
-        </ul>
       </div>
+      <div className="container-printable" ref={componentRef}>
+        <header>
+          <h1>{formData.name}</h1>
+          <h2>{"(" + formData.title + ")"}</h2>
+          <p className={formData.email? "block" : "hidden"}> Email:- {formData.email} <p className={formData.phone? "inline" : "hidden"}> | Phone:-{" " + formData.phone} </p> | {formData.address}</p>
+          { 
+            formData.linkedin && 
+            <p>Linkedin: <a href={formData.linkedin} target="_blank" rel="noopener noreferrer">{formData.linkedin}</a></p>
+            
+            
+          }
+          { 
+            formData.portfolio && 
+            <p>Portfolio: <a href={formData.portfolio} target="_blank" rel="noopener noreferrer">{formData.portfolio}</a></p>
+            
+            
+          }
+        </header>
 
-      <div className="item">
-        <div className="item-title clearfix">
-          Web Developer - XYZ Solutions
-          <span className="date">Jun 2018 – Dec 2020</span>
+        <div className="section">
+          <div className="section-title">Professional Summary</div>
+          <hr></hr>
+          <p>{formData.summary}</p>
         </div>
-        <div className="item-subtitle">San Francisco, CA</div>
-        <ul>
-          <li>Created and maintained company websites using HTML, CSS, and JavaScript.</li>
-          <li>Improved UX/UI design, increasing user engagement by 40%.</li>
-        </ul>
-      </div> */}
-    </div>
-
-    <div className="section">
-      <div className="section-title">Education</div>
-      <hr></hr>
-      {
-        formData.education.map((edu)=>{
-          return <div className="item">
-          <div className="item-title clearfix">
-            {edu.degree} in {edu.field}
-            <span className="date">{edu.startDate} – {edu.endDate}</span>
-          </div>
-          <div className="item-subtitle">{edu.institute}</div>
+        <div className="section">
+          <div className="section-title">{fresher === "Projects" ? "Projects" : "Work Experience"}</div>
+          <hr></hr>
+          {
+            <ul className='list-disc list-inside'>
+              {
+                formData.experience.map((exp, index) => {
+              return <div className={"item " + (fresher === "Projects" ? "hidden" : "block")} key={index}>
+                <div className={"item-title clearfix "}>
+                  {`${index+1+")"} ${exp.role} at ${exp.company}`}
+                </div>
+                <span className="date">{exp.startDate} – {exp.endDate}{'(' + exp.duration + ')'}</span>
+              </div>
+            }
+            )
+              } 
+            </ul>
+            
+          }
+          {
+            formData.projects.map((project, index) => {
+              return <div className={"item " + (fresher === "Projects" ? "block" : "hidden")} key={index}>
+                <div className="">
+                  <span className="font-black">{project.projectName}</span>
+                  <p>{project.projectDesc}</p>
+                  <a href="#" className="underline">{project.projectLink}</a>
+                </div>
+              </div>
+            }
+            )
+          }
         </div>
-        }
-        )
-      }
-    </div>
 
-    <div className="section">
-      <div className="section-title">Skills</div>
-      <hr></hr>
-      <p>{formData.skills.map((skill)=>{
-        return <span>{skill.skill} | </span>
-      })}</p>
-    </div>
+        <div className="section">
+          <div className="section-title">Education</div>
+          <hr></hr>
+          {
+            formData.education.map((edu, index) => {
+              return <div className="item" key={index}>
+                <div className="item-title clearfix">
+                  {edu.degree} in {edu.field}
+                  <span className="date">{edu.startDate} – {edu.endDate}</span>
+                </div>
+                <div className="item-subtitle">{edu.institute}</div>
+              </div>
+            }
+            )
+          }
+        </div>
 
-    <div className="section">
-      <div className="section-title">Languages</div>
-      <hr></hr>
-      <p>{formData.languages.map((lang)=>{
-        return <span>{lang.language} | </span>
-      })}</p>
-    </div>
-  </div>
+        <div className="section">
+          <div className="section-title">Skills</div>
+          <hr></hr>
+          <p>{formData.skills.map((skill, index) => {
+            return <span key={index}>{skill.skill} | </span>
+          })}</p>
+        </div>
+
+        <div className="section">
+          <div className="section-title">Languages</div>
+          <hr></hr>
+          <p>{formData.languages.map((lang, index) => {
+            return <span key={index}>{lang.language} | </span>
+          })}</p>
+        </div>
+      </div>
     </div>
   );
 }
