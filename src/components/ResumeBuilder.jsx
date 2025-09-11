@@ -55,13 +55,15 @@ export default function ResumeBuilder({ handlePrint }) {
   const handleGenerateAI = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://resume-builder-backend-2-wn34.onrender.com/generate-summary", {
+      console.log(formData.experience[0]?.duration);
+      const res = await fetch("http://localhost:5000/generate-summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobTitle: formData.title,
           company: fresher === "Experience" ? formData.experience[0]?.company : formData.projects[0]?.projectName,
-          experience: fresher === "Experience" ? formData.experience[0].duration : null
+          experience: fresher === "Experience" ? formData.experience[0].duration : null,
+          fresher:fresher!=="Experience"?true:false
         }),
       });
 
