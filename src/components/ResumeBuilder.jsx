@@ -62,7 +62,7 @@ export default function ResumeBuilder({ handlePrint }) {
         body: JSON.stringify({
           jobTitle: formData.title,
           company: fresher === "Experience" ? formData.experience[0]?.company : formData.projects[0]?.projectName,
-          experience: fresher === "Experience" ? formData.experience[0].duration : null,
+          exp_duration: fresher === "Experience" ? formData.experience[0].duration : null,
           fresher:fresher!=="Experience"?true:false
         }),
       });
