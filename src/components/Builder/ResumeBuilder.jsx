@@ -4,7 +4,7 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { useRef } from "react";
 import html2canvas from "html2canvas";
-import "../ResumeLayout.css";
+import "../../ResumeLayout.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faArrowLeft, faDownload, faPlus } from '@fortawesome/free-solid-svg-icons';
 import Switch from "./Switch";
@@ -56,7 +56,7 @@ export default function ResumeBuilder({ handlePrint }) {
     setLoading(true);
     try {
       console.log(formData.experience[0]?.duration);
-      const res = await fetch("https://resume-builder-backend-2-wn34.onrender.com/generate-summary", {
+      const res = await fetch("http://localhost:5000/generate-summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -228,10 +228,11 @@ export default function ResumeBuilder({ handlePrint }) {
 
   return (
     <div className="container">
-      <div className="form-section w-[650px] h-[90vh] overflow-y-scroll">
+      <div className="form-section w-[850px] h-[90vh] overflow-y-scroll">
         {step === 1 && (
           <>
             <h1 className="text-[20px] font-bold mb-4">Personal Information</h1>
+            <div className='grid grid-cols-2'>
             {['name', 'title', 'email', 'phone', 'address', 'linkedin','portfolio'].map((field) => (
               <div key={field}>
                 <label className="mb-2">{field}</label>
@@ -247,6 +248,7 @@ export default function ResumeBuilder({ handlePrint }) {
                 </div>
               </div>
             ))}
+            </div>
           </>)}
 
         {step === 2 && (
@@ -256,34 +258,42 @@ export default function ResumeBuilder({ handlePrint }) {
               <h1 className="text-[18px] mt-4 mb-4">{fresher}</h1>
               <Switch fresher={fresher} setFresher={setFresher}></Switch>
             </div>
-            <div className={fresher === "Experience" ? "block" : "hidden"}>
+            <div className={fresher === "Experience" ? "grid grid-cols-2" : "hidden" }>
+              <div>
               <label>Role</label>
               <div>
                 <input className="input" name="exprole" placeholder="Role" value={formInput.exprole} onChange={handleFormInputChange} />
               </div>
+              </div>
+              <div>
               <label>Company Name</label>
               <div>
                 <input className="input" name="company" placeholder="Company Name" value={formInput.company} onChange={handleFormInputChange} />
               </div>
+              </div>
+              <div>
               <label>Start Date</label>
               <div>
                 <input type="date" className="input" name="startDateExp" placeholder="Start Date" value={formInput.startDateExp} onChange={handleFormInputChange} />
               </div>
+              </div>
+              <div>
               <label>End Date</label>
               <div>
                 <input type="date" className="input" name="endDateExp" placeholder="End Date" value={formInput.endDateExp} onChange={handleFormInputChange} />
                 <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, endDateExp: new Date().toISOString().split('T')[0] })) : setFormInput(prev => ({ ...prev, endDateExp: "" }))} /> Currently working here
               </div>
-              <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddExperience} >Add Experience <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
+              </div>
+              <button className="p-2 rounded bg-blue-600 text-white w-[180px] mt-[-38px]" onClick={handleAddExperience} >Add Experience <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
             </div>
             <div className={fresher === "Projects" ? "block" : "hidden"}>
               <input className="input" name="projectName" placeholder="Your project name" value={formInput.projectName} onChange={handleFormInputChange} /><br></br>
-              <textarea className="input" maxLength={1000} placeholder="Describe your project, write about tech stack etc." value={formInput.projectDesc} onChange={handleFormInputChange}></textarea>
+              <textarea className="input" maxLength={1000} placeholder="Describe your project, write about tech stack etc."  name="projectDesc" value={formInput.projectDesc} onChange={handleFormInputChange}></textarea>
               <input className="input" name="projectLink" placeholder="Project Link" value={formInput.projectLink} onChange={handleFormInputChange} /><br></br>
               <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddProject} >Add Project <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
             </div>
             <textarea
-              className="input h-[200px]"
+              className="input h-[170px]"
               value={formData.summary}
               name="summary"
               maxLength={600}
@@ -306,30 +316,48 @@ export default function ResumeBuilder({ handlePrint }) {
         {step === 3 && (
           <>
             <h1 className="text-[20px] font-bold mb-4">Education</h1>
-            <h1>Degree/Certification</h1>
-            <input className="input" name="eduDegree" placeholder="higher qualification" value={formInput.eduDegree} onChange={handleFormInputChange} />
-            <h1>Field Of Study</h1>
-            <input className="input" name="eduField" placeholder="field of study" value={formInput.eduField} onChange={handleFormInputChange} />
-            <h1>Institution</h1>
-            <input className="input" name="eduInstitute" placeholder="institution" value={formInput.eduInstitute} onChange={handleFormInputChange} />
+            <div className='grid grid-cols-2'>
+              <div>
+              <h1>Degree/Certification</h1>
+              <input className="input" name="eduDegree" placeholder="higher qualification" value={formInput.eduDegree} onChange={handleFormInputChange} />
+              </div>
+              <div>
+              <h1>Field Of Study</h1>
+              <input className="input" name="eduField" placeholder="field of study" value={formInput.eduField} onChange={handleFormInputChange} />
+              </div>
+              <div>  
+              <h1>Institution</h1>
+              <input className="input" name="eduInstitute" placeholder="institution" value={formInput.eduInstitute} onChange={handleFormInputChange} />
+              </div>
+              <div>
             <h1>Start Date</h1>
             <input className="input" type="date" name="eduStartDate" placeholder="start date" value={formInput.eduStartDate} onChange={handleFormInputChange} />
+              </div>
+              <div>
             <h1>End Date</h1>
             <input className="input" type="date" name="eduEndDate" placeholder="end date" value={formInput.eduEndDate} onChange={handleFormInputChange} />
             <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, eduEndDate: "Currently Pursuing" })) : setFormInput(prev => ({ ...prev, eduEndDate: "" }))} /> Currently pursuing<br></br>
+              </div>  
+            </div>
             <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddEducation} >Add Education <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
           </>
         )}
         {step === 4 && (
           <>
+          <div className='grid grid-cols-2'>
+            <div>
             <h1 className="text-[20px] font-bold mb-4">Skills</h1>
             <input className="input" name="skill" value={formInput.skill} placeholder="Skills" onChange={handleFormInputChange} /><br></br>
             <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddSkill} >Add Skill <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
-            <br></br>
-            <br></br>
+            </div>
+
+            <div>
             <h1 className="text-[20px] font-bold mb-4">Languages</h1>
             <input className="input" name="lang" placeholder="Languages" value={formInput.lang} onChange={handleFormInputChange} /><br></br>
             <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddLanguage} >Add Language</button>
+            </div>                    
+          </div>
+            
           </>
         )}
 
@@ -338,7 +366,7 @@ export default function ResumeBuilder({ handlePrint }) {
             <button onClick={() => setStep(step - 1)} className="nav-button"> <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back</button>
           )}
           {step < 4 ? (
-            <button onClick={() => handleNextStep()} className="nav-button">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
+            <button onClick={() => handleNextStep()} className="nav-button ml-[10px]">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
           ) :
             <button onClick={() => handleDownloadPDF()} className="download-button">Download PDF <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon></button>
           }
@@ -346,27 +374,31 @@ export default function ResumeBuilder({ handlePrint }) {
       </div>
       <div className="container-printable" ref={componentRef}>
         <header>
-          <h1>{formData.name}</h1>
-          <h2>{"(" + formData.title + ")"}</h2>
-          <p className={formData.email? "block" : "hidden"}> Email:- {formData.email} <p className={formData.phone? "inline" : "hidden"}> | Phone:-{" " + formData.phone} </p> | {formData.address}</p>
-          { 
-            formData.linkedin && 
-            <p>Linkedin: <a href={formData.linkedin} target="_blank" rel="noopener noreferrer">{formData.linkedin}</a></p>
-            
-            
-          }
-          { 
-            formData.portfolio && 
-            <p>Portfolio: <a href={formData.portfolio} target="_blank" rel="noopener noreferrer">{formData.portfolio}</a></p>
-            
-            
-          }
-        </header>
+  <h1>{formData.name}</h1>
+  <h2>{formData.title?"("+formData.title+")":""}</h2>
+  {formData.email && (
+    <p>
+      Email: {formData.email}
+      {formData.phone && <span> | Phone: {formData.phone}</span>} | {formData.address}
+    </p>
+  )}
+  {formData.linkedin && (
+    <p>
+      Linkedin: <a href={formData.linkedin} target="_blank" rel="noopener noreferrer">{formData.linkedin}</a>
+    </p>
+  )}
+  {formData.portfolio && (
+    <p>
+      Portfolio: <a href={formData.portfolio} target="_blank" rel="noopener noreferrer">{formData.portfolio}</a>
+    </p>
+  )}
+</header>
+
 
         <div className="section">
           <div className="section-title">Professional Summary</div>
           <hr></hr>
-          <p>{formData.summary}</p>
+          <p className='summary-paragraph'>{formData.summary}</p>
         </div>
         <div className="section">
           <div className="section-title">{fresher === "Projects" ? "Projects" : "Work Experience"}</div>

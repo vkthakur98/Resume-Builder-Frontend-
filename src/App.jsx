@@ -1,18 +1,27 @@
 import React from 'react';
 import  { useRef } from 'react';
-import ResumeBuilder from './components/ResumeBuilder';
-import Logo from "./logo/Logo.png"
+import HomePage from './components/Builder/HomePage';
+import ResumeBuilder from './components/Builder/ResumeBuilder';
+import Header from './components/Header/Header';
+import NotFound from './components/Builder/NotFound';
+import TemplateChooser from './components/Builder/TemplateChooser';
+import { Routes, Route, Link } from "react-router-dom";
 
 
 function App() {
   const componentRef = useRef(null);
   return (
     <div className="App">
-      <div className='bg-[#1E3A8A] text-white p-4'>
-      <img src={Logo} height={150} width={120} ></img>
-      </div>
-        <ResumeBuilder ></ResumeBuilder>
+      <Header></Header>
+      <Routes>
+        <Route path="/" element={<HomePage/>} />
+        <Route path="/choosetemplate" element={<TemplateChooser/>} />
+        <Route path="/createresume" element={<ResumeBuilder/>} />
+        {/* Catch-all route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </div>
+
   );
 }
 
