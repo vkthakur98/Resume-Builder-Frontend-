@@ -18,7 +18,7 @@ const HeroSection = () => ( // Include the TemplateChooser
                 </p>
                 
                 <button className="bg-teal-500 text-white font-semibold py-3 px-8 rounded-3xl shadow-xl hover:bg-teal-600 transition duration-300 transform hover:scale-105  cursor-pointer">
-                              <Link to="/createresume">Create Your Free Resume</Link> 
+                              <Link to="/choosetemplate">Create Your Free Resume</Link> 
                 </button>
             </div>
             {/* Right Image Mockup */}
@@ -34,7 +34,7 @@ const HeroSection = () => ( // Include the TemplateChooser
 
 const StepsSection = () => {
     const steps = [
-        // { icon: ImageIcon, title: "Choose a Template" },
+        { icon: ImageIcon, title: "Choose a Template" },
         { icon: FileText, title: "Fill Your Details" },
         { icon: Download, title: "Download & Apply" },
     ];
@@ -139,9 +139,9 @@ const Footer = () => (
     <footer className="bg-gray-800 text-gray-400 py-8">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
             <p className="text-sm mb-4">
-                &copy; {new Date().getFullYear()} Resume Builder. All rights reserved.
+                {new Date().getFullYear()} Resume Builder
             </p>
-            <div className="flex justify-center space-x-6 mb-4 text-sm">
+            {/* <div className="flex justify-center space-x-6 mb-4 text-sm">
                 <a href="#" className="hover:text-white transition duration-300">Privacy Policy</a>
                 <a href="#" className="hover:text-white transition duration-300">Terms of Service</a>
                 <a href="#" className="hover:text-white transition duration-300">Contact</a>
@@ -156,7 +156,7 @@ const Footer = () => (
                 <a href="#" aria-label="Instagram" className="hover:text-white transition duration-300">
                     <Instagram className="w-5 h-5" />
                 </a>
-            </div>
+            </div> */}
         </div>
     </footer>
 );
