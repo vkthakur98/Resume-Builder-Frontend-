@@ -16,8 +16,11 @@ const HeroSection = () => ( // Include the TemplateChooser
                 <p className="text-lg text-gray-600 mb-8">
                     Create stunning, professional resumes in minutes with our easy-to-use builder and customizable templates.
                 </p>
+                <p className="block md:hidden lg:hidden text-lg bg-yellow-200 text-red-600 font-semibold py-3 px-8 rounded-xl shadow-xl mb-8">
+                    Please use a desktop or laptop to start building your resume. 
+                </p>
                 
-                <button className="bg-teal-500 text-white font-semibold py-3 px-8 rounded-3xl shadow-xl hover:bg-teal-600 transition duration-300 transform hover:scale-105  cursor-pointer">
+                <button className="hidden md:block lg:block bg-teal-500 text-white font-semibold py-3 px-8 rounded-3xl shadow-xl hover:bg-teal-600 transition duration-300 transform hover:scale-105  cursor-pointer">
                               <Link to="/choosetemplate">Create Your Free Resume</Link> 
                 </button>
             </div>
