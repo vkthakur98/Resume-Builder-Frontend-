@@ -14,7 +14,7 @@ const HeroSection = () => ( // Include the TemplateChooser
                     Build Your Perfect Resume
                 </h1>
                 <p className="text-lg text-gray-600 mb-8">
-                    Stand out from the crowd with professional, customizable, and easy-to-create resumes.
+                    Create stunning, professional resumes in minutes with our easy-to-use builder and customizable templates.
                 </p>
                 
                 <button className="bg-teal-500 text-white font-semibold py-3 px-8 rounded-3xl shadow-xl hover:bg-teal-600 transition duration-300 transform hover:scale-105  cursor-pointer">

@@ -56,7 +56,7 @@ export default function ResumeBuilder({ handlePrint }) {
     setLoading(true);
     try {
       console.log(formData.experience[0]?.duration);
-      const res = await fetch("http://localhost:5000/generate-summary", {
+      const res = await fetch("https://resume-builder-backend-1-znsm.onrender.com/generate-summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
