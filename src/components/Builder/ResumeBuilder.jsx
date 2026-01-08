@@ -8,13 +8,15 @@ import "../../ResumeLayout.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faArrowLeft, faDownload, faPlus } from '@fortawesome/free-solid-svg-icons';
 import Switch from "./Switch";
+import StatusBar from './StatusBar';
 
-export default function ResumeBuilder({ handlePrint }) {
+export default function ResumeBuilder() {
   const componentRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [fresher, setFresher] = useState("Experience");
   const [errors, setErrors] = useState('');
+  const [process, setProcess] = useState(0);
 
   // Optimized state variables:
   const [formInput, setFormInput] = useState({
@@ -105,19 +107,38 @@ export default function ResumeBuilder({ handlePrint }) {
   };
 
   const handleDownloadPDF = async () => {
-    const element = componentRef.current;
-    if (!element) return;
+  const element = componentRef.current;
+  if (!element) return;
 
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL("image/png");
+  const canvas = await html2canvas(element, { scale: 2 });
+  const imgData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+  const pdf = new jsPDF("p", "mm", "a4");
 
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save("resume.pdf");
-  };
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  const imgWidth = pdfWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  let heightLeft = imgHeight;
+  let position = 0;
+
+  // First page
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  heightLeft -= pdfHeight;
+
+  // Additional pages
+  // while (heightLeft > 0) {
+  //   position = heightLeft - imgHeight;
+  //   pdf.addPage();
+  //   pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  //   heightLeft -= pdfHeight;
+  // }
+
+  pdf.save("resume.pdf");
+};
+
 
   const handleAddExperience = () => {
     const { exprole, company, startDateExp, endDateExp } = formInput;
@@ -156,6 +177,7 @@ export default function ResumeBuilder({ handlePrint }) {
       }],
     });
     setFormInput(prev => ({ ...prev, eduDegree: "", eduField: "", eduInstitute: "", eduStartDate: "", eduEndDate: "" }));
+
   };
 
   const handleAddSkill = () => {
@@ -218,6 +240,7 @@ export default function ResumeBuilder({ handlePrint }) {
     if (validate()) {
       console.log('Proceeding to next step:', formData);
       setStep(step + 1);
+      setProcess(((step + 1) / 3) * 100);
     }
   };
 
@@ -227,15 +250,17 @@ export default function ResumeBuilder({ handlePrint }) {
   };
 
   return (
+    <>
     <div className="container">
       <div className="form-section w-[850px] h-[90vh] overflow-y-scroll">
-        {step === 1 && (
+        <StatusBar status={process}></StatusBar>
+        {step === 0 && (
           <>
-            <h1 className="text-[20px] font-bold mb-4">Personal Information</h1>
+            <h1 className="text-[20px] font-bold mb-4 ">Personal Information</h1>
             <div className='grid grid-cols-2'>
             {['name', 'title', 'email', 'phone', 'address', 'linkedin','portfolio'].map((field) => (
               <div key={field}>
-                <label className="mb-2">{field}</label>
+                <label className="mb-1">{field}</label>
                 <div>
                   <input
                     className="input"
@@ -251,7 +276,7 @@ export default function ResumeBuilder({ handlePrint }) {
             </div>
           </>)}
 
-        {step === 2 && (
+        {step === 1 && (
           <>
             <h1 className="text-[20px] font-bold mb-4">Professional Background</h1>
             <div className="flex justify-between items-center">
@@ -284,7 +309,7 @@ export default function ResumeBuilder({ handlePrint }) {
                 <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, endDateExp: new Date().toISOString().split('T')[0] })) : setFormInput(prev => ({ ...prev, endDateExp: "" }))} /> Currently working here
               </div>
               </div>
-              <button className="p-2 rounded bg-blue-600 text-white w-[180px] mt-[-38px]" onClick={handleAddExperience} >Add Experience <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
+              <button className="p-2 rounded bg-blue-600 text-white w-[180px] mt-[-34px]" onClick={handleAddExperience} >Add Experience <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
             </div>
             <div className={fresher === "Projects" ? "block" : "hidden"}>
               <input className="input" name="projectName" placeholder="Your project name" value={formInput.projectName} onChange={handleFormInputChange} /><br></br>
@@ -293,7 +318,7 @@ export default function ResumeBuilder({ handlePrint }) {
               <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddProject} >Add Project <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
             </div>
             <textarea
-              className="input h-[170px]"
+              className="input h-[150px]"
               value={formData.summary}
               name="summary"
               maxLength={600}
@@ -313,7 +338,7 @@ export default function ResumeBuilder({ handlePrint }) {
             </button>
           </>
         )}
-        {step === 3 && (
+        {step === 2 && (
           <>
             <h1 className="text-[20px] font-bold mb-4">Education</h1>
             <div className='grid grid-cols-2'>
@@ -336,13 +361,13 @@ export default function ResumeBuilder({ handlePrint }) {
               <div>
             <h1>End Date</h1>
             <input className="input" type="date" name="eduEndDate" placeholder="end date" value={formInput.eduEndDate} onChange={handleFormInputChange} />
-            <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, eduEndDate: "Currently Pursuing" })) : setFormInput(prev => ({ ...prev, eduEndDate: "" }))} /> Currently pursuing<br></br>
+            <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, eduEndDate: new Date().toISOString().split('T')[0] })) : setFormInput(prev => ({ ...prev, eduEndDate: "" }))} /> Currently pursuing<br></br>
               </div>  
             </div>
             <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddEducation} >Add Education <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
           </>
         )}
-        {step === 4 && (
+        {step === 3 && (
           <>
           <div className='grid grid-cols-2'>
             <div>
@@ -362,10 +387,10 @@ export default function ResumeBuilder({ handlePrint }) {
         )}
 
         <div className="button-group">
-          {step > 1 && (
-            <button onClick={() => setStep(step - 1)} className="nav-button"> <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back</button>
+          {step > 0 && (
+            <button onClick={() => {setStep(step - 1); setProcess(((step - 1) / 3) * 100); } } className="nav-button"> <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back</button>
           )}
-          {step < 4 ? (
+          {step < 3 ? (
             <button onClick={() => handleNextStep()} className="nav-button ml-[10px]">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
           ) :
             <button onClick={() => handleDownloadPDF()} className="download-button">Download PDF <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon></button>
@@ -374,7 +399,7 @@ export default function ResumeBuilder({ handlePrint }) {
       </div>
       <div className="container-printable" ref={componentRef}>
         <header>
-  <h1>{formData.name}</h1>
+  <h1 className="name">{formData.name}</h1>
   <h2>{formData.title?"("+formData.title+")":""}</h2>
   {formData.email && (
     <p>
@@ -422,10 +447,10 @@ export default function ResumeBuilder({ handlePrint }) {
           {
             formData.projects.map((project, index) => {
               return <div className={"item " + (fresher === "Projects" ? "block" : "hidden")} key={index}>
-                <div className="">
-                  <span className="font-black">{project.projectName}</span>
-                  <p>{project.projectDesc}</p>
-                  <a href="#" className="underline">{project.projectLink}</a>
+                <div>
+                  <span className="item-title clearfix">{project.projectName}</span>
+                  <p className="date">{project.projectDesc}</p>
+                  <a href="#" className="project-link underline">{project.projectLink}</a>
                 </div>
               </div>
             }
@@ -441,7 +466,7 @@ export default function ResumeBuilder({ handlePrint }) {
               return <div className="item" key={index}>
                 <div className="item-title clearfix">
                   {edu.degree} in {edu.field}
-                  <span className="date">{edu.startDate} – {edu.endDate}</span>
+                  <span className="date">{edu.startDate} – {edu.endDate==dateFormat(new Date().toISOString().split('T')[0])?"Currently pursuing":edu.endDate}</span>
                 </div>
                 <div className="item-subtitle">{edu.institute}</div>
               </div>
@@ -454,7 +479,7 @@ export default function ResumeBuilder({ handlePrint }) {
           <div className="section-title">Skills</div>
           <hr></hr>
           <p>{formData.skills.map((skill, index) => {
-            return <span key={index}>{skill.skill} | </span>
+            return <span className="date" key={index}>{skill.skill} | </span>
           })}</p>
         </div>
 
@@ -462,10 +487,11 @@ export default function ResumeBuilder({ handlePrint }) {
           <div className="section-title">Languages</div>
           <hr></hr>
           <p>{formData.languages.map((lang, index) => {
-            return <span key={index}>{lang.language} | </span>
+            return <span className="date" key={index}>{lang.language} | </span>
           })}</p>
         </div>
       </div>
     </div>
+    </>
   );
 }

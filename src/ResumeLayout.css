@@ -14,24 +14,25 @@
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  height: 85vh;
 }
 
 /* Right Section - Resume Preview */
 .container-printable {
   background: #ffffff;
-  /* border-radius: 12px; */
   padding: 30px;
   width: 100%;
   max-width: 600px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
-  line-height: 1.6;
+  /* line-height: 2; */
+  border-radius: 12px;
 }
 
 /* Input Fields */
 .input {
   width: 90%;
   padding: 10px 12px;
-  margin: 10px 0 20px;
+  margin: 10px 0 15px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background: #f1f5f9;
@@ -42,6 +43,11 @@
   border-color: #2563eb;
   outline: none;
   background: #e0f2fe;
+  box-shadow: 0 0 8px 2px #FF714C;
+}
+
+.name{
+  line-height: 2;
 }
 
 /* Buttons */
@@ -71,15 +77,15 @@ button {
   opacity: 0.9;
 }
 
+.project-desc{
+  font-size: 14px;
+  color: #374151;
+  margin-top: 6px;
+}
+
 /* Section Titles in Resume */
 .section {
   margin-bottom: 24px;
-}
-
-.section p{
-  font-size: 14px;
-  /* color: #374151; */
-  margin-top: 8px;
 }
 
 .section-title {
@@ -89,6 +95,10 @@ button {
   padding-left: 12px;
   margin-bottom: 10px;
   color: #1f2937;
+}
+
+.summary-paragraph {
+  font-size: 13px;
 }
 
 /* Resume Header */
@@ -126,7 +136,7 @@ header p {
   justify-content: space-between;
   align-items: center;
   color: #1e293b;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 
@@ -138,6 +148,12 @@ header p {
 
 .date {
   font-size: 13px;
+  color: black;
+  font-weight: normal;
+}
+
+.project-link {
+  font-size: 12px;
   color: black;
   font-weight: normal;
 }
@@ -164,6 +180,35 @@ label {
 button {
   cursor: pointer;
 }
+
+.status-bar {
+  height: 10px;
+  width: 100%;
+  background: #d1d5db;
+  border-radius: 12px;
+}
+
+.line
+{
+  height: 10px;
+  width: 0%;
+  background: #10b981;
+  border-radius: 12px;
+  transition: width 0.5s ease-in-out;
+  border-radius: 12px;
+}
+
+/* .line::after
+{
+  content: '';
+  display: block;
+  height: 10px;
+  width: 10px;
+  background: #3b82f6;
+  border-radius: 50%;
+  margin-left: auto;
+  transform: translateY(-3px);
+} */
 
 /* Scrollbar for form section */
 .form-section::-webkit-scrollbar {
