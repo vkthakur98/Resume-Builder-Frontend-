@@ -9,6 +9,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faArrowLeft, faDownload, faPlus } from '@fortawesome/free-solid-svg-icons';
 import Switch from "./Switch";
 import StatusBar from './StatusBar';
+import ResumeDownloadButton from './ResumeDownloadButton';
+
 
 export default function ResumeBuilder() {
   const componentRef = useRef(null);
@@ -110,10 +112,16 @@ export default function ResumeBuilder() {
   const element = componentRef.current;
   if (!element) return;
 
-  const canvas = await html2canvas(element, { scale: 2 });
-  const imgData = canvas.toDataURL("image/png");
+  const canvas = await html2canvas(element, {
+    scale: 1.5,           // ↓ from 2
+    useCORS: true,
+    backgroundColor: "#ffffff"
+  });
 
-  const pdf = new jsPDF("p", "mm", "a4");
+  // ⬇️ JPEG instead of PNG (huge difference)
+  const imgData = canvas.toDataURL("image/jpeg", 0.7); // 0.6–0.75 sweet spot
+
+  const pdf = new jsPDF("p", "mm", "a4", true); // compression ON
 
   const pdfWidth = pdf.internal.pageSize.getWidth();
   const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -124,15 +132,13 @@ export default function ResumeBuilder() {
   let heightLeft = imgHeight;
   let position = 0;
 
-  // First page
-  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, "", "FAST");
   heightLeft -= pdfHeight;
 
-  // Additional pages
   // while (heightLeft > 0) {
-  //   position = heightLeft - imgHeight;
+  //   position -= pdfHeight;
   //   pdf.addPage();
-  //   pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  //   pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, "", "FAST");
   //   heightLeft -= pdfHeight;
   // }
 
@@ -393,7 +399,7 @@ export default function ResumeBuilder() {
           {step < 3 ? (
             <button onClick={() => handleNextStep()} className="nav-button ml-[10px]">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
           ) :
-            <button onClick={() => handleDownloadPDF()} className="download-button">Download PDF <FontAwesomeIcon icon={faDownload}></FontAwesomeIcon></button>
+            <ResumeDownloadButton resumeData={formData} fresher={fresher} dateFormat={dateFormat} />
           }
         </div>
       </div>
@@ -434,7 +440,7 @@ export default function ResumeBuilder() {
                 formData.experience.map((exp, index) => {
               return <div className={"item " + (fresher === "Projects" ? "hidden" : "block")} key={index}>
                 <div className={"item-title clearfix "}>
-                  {`${index+1+")"} ${exp.role} at ${exp.company}`}
+                  {`${index+1+")"} ${exp.role} at ${exp.company}`}<FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon>
                 </div>
                 <span className="date">{exp.startDate} – {exp.endDate}{'(' + exp.duration + ')'}</span>
               </div>
