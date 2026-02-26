@@ -1,24 +1,32 @@
-import React from 'react';
+import React from "react";
 import { useState } from "react";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { useRef } from "react";
 import html2canvas from "html2canvas";
-import "../../ResumeLayout.css"
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight, faArrowLeft, faDownload, faPlus } from '@fortawesome/free-solid-svg-icons';
+import "../../ResumeLayout.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faArrowRight,
+  faArrowLeft,
+  faDownload,
+  faPlus,
+  faEdit,
+} from "@fortawesome/free-solid-svg-icons";
 import Switch from "./Switch";
-import StatusBar from './StatusBar';
-import ResumeDownloadButton from './ResumeDownloadButton';
-
+import Model from "./Model";
+import StatusBar from "./StatusBar";
+import ResumeDownloadButton from "./ResumeDownloadButton";
 
 export default function ResumeBuilder() {
   const componentRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [fresher, setFresher] = useState("Experience");
-  const [errors, setErrors] = useState('');
+  const [errors, setErrors] = useState("");
   const [process, setProcess] = useState(0);
+  const [modelView, setModelView] = useState(false);
+  const [modelData, setModelData] = useState({})
 
   // Optimized state variables:
   const [formInput, setFormInput] = useState({
@@ -60,19 +68,26 @@ export default function ResumeBuilder() {
     setLoading(true);
     try {
       console.log(formData.experience[0]?.duration);
-      const res = await fetch("https://resume-builder-backend-1-znsm.onrender.com/generate-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobTitle: formData.title,
-          company: fresher === "Experience" ? formData.experience[0]?.company : formData.projects[0]?.projectName,
-          exp_duration: fresher === "Experience" ? formData.experience[0].duration : null,
-          fresher:fresher!=="Experience"?true:false
-        }),
-      });
+      const res = await fetch(
+        "https://resume-builder-backend-1-znsm.onrender.com/generate-summary",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jobTitle: formData.title,
+            company:
+              fresher === "Experience"
+                ? formData.experience[0]?.company
+                : formData.projects[0]?.projectName,
+            exp_duration:
+              fresher === "Experience" ? formData.experience[0].duration : null,
+            fresher: fresher !== "Experience" ? true : false,
+          }),
+        }
+      );
 
       const data = await res.json();
-      setFormData(prev => ({ ...prev, summary: data.summary }));
+      setFormData((prev) => ({ ...prev, summary: data.summary }));
     } catch (err) {
       console.error("Error generating summary:", err);
     } finally {
@@ -87,8 +102,14 @@ export default function ResumeBuilder() {
     return x;
   };
 
+  const editExp = (exp) => {
+      setModelView(true);
+      setModelData(formData.experience[exp]);
+  }
+
   const showExperienceTime = (startDateExp, endDateExp) => {
-    if(endDateExp === new Date().toISOString().split('T')[0]) return 'Currently Working';
+    if (endDateExp === new Date().toISOString().split("T")[0])
+      return "Currently Working";
     const startDate = new Date(startDateExp);
     const endDate = new Date(endDateExp);
 
@@ -100,51 +121,51 @@ export default function ResumeBuilder() {
       months += 12;
     }
 
-    const yearStr = years > 0 ? `${years} year${years > 1 ? 's' : ''}` : '';
-    const monthStr = months > 0 ? `${months} month${months > 1 ? 's' : ''}` : '';
+    const yearStr = years > 0 ? `${years} year${years > 1 ? "s" : ""}` : "";
+    const monthStr =
+      months > 0 ? `${months} month${months > 1 ? "s" : ""}` : "";
 
-    const result = [yearStr, monthStr].filter(Boolean).join(' ');
+    const result = [yearStr, monthStr].filter(Boolean).join(" ");
 
-    return result || 'Currently Working';
+    return result || "Currently Working";
   };
 
   const handleDownloadPDF = async () => {
-  const element = componentRef.current;
-  if (!element) return;
+    const element = componentRef.current;
+    if (!element) return;
 
-  const canvas = await html2canvas(element, {
-    scale: 1.5,           // ↓ from 2
-    useCORS: true,
-    backgroundColor: "#ffffff"
-  });
+    const canvas = await html2canvas(element, {
+      scale: 1.5, // ↓ from 2
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
 
-  // ⬇️ JPEG instead of PNG (huge difference)
-  const imgData = canvas.toDataURL("image/jpeg", 0.7); // 0.6–0.75 sweet spot
+    // ⬇️ JPEG instead of PNG (huge difference)
+    const imgData = canvas.toDataURL("image/jpeg", 0.7); // 0.6–0.75 sweet spot
 
-  const pdf = new jsPDF("p", "mm", "a4", true); // compression ON
+    const pdf = new jsPDF("p", "mm", "a4", true); // compression ON
 
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
 
-  const imgWidth = pdfWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  let heightLeft = imgHeight;
-  let position = 0;
+    let heightLeft = imgHeight;
+    let position = 0;
 
-  pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, "", "FAST");
-  heightLeft -= pdfHeight;
+    pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, "", "FAST");
+    heightLeft -= pdfHeight;
 
-  // while (heightLeft > 0) {
-  //   position -= pdfHeight;
-  //   pdf.addPage();
-  //   pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, "", "FAST");
-  //   heightLeft -= pdfHeight;
-  // }
+    // while (heightLeft > 0) {
+    //   position -= pdfHeight;
+    //   pdf.addPage();
+    //   pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight, "", "FAST");
+    //   heightLeft -= pdfHeight;
+    // }
 
-  pdf.save("resume.pdf");
-};
-
+    pdf.save("resume.pdf");
+  };
 
   const handleAddExperience = () => {
     const { exprole, company, startDateExp, endDateExp } = formInput;
@@ -155,35 +176,54 @@ export default function ResumeBuilder() {
     const temp_exp = showExperienceTime(startDateExp, endDateExp);
     setFormData({
       ...formData,
-      experience: [...formData.experience, {
-        role: exprole,
-        company: company,
-        startDate: dateFormat(startDateExp),
-        endDate: dateFormat(endDateExp),
-        duration: temp_exp
-      }],
+      experience: [
+        ...formData.experience,
+        {
+          role: exprole,
+          company: company,
+          startDate: startDateExp,
+          endDate: endDateExp,
+          duration: temp_exp,
+        },
+      ],
     });
-    setFormInput(prev => ({ ...prev, exprole: "", company: "", startDateExp: "", endDateExp: "" }));
+    setFormInput((prev) => ({
+      ...prev,
+      exprole: "",
+      company: "",
+      startDateExp: "",
+      endDateExp: "",
+    }));
   };
 
   const handleAddEducation = () => {
-    const { eduDegree, eduField, eduInstitute, eduStartDate, eduEndDate } = formInput;
+    const { eduDegree, eduField, eduInstitute, eduStartDate, eduEndDate } =
+      formInput;
     if (!eduDegree || !eduInstitute) {
       alert("Please fill all fields to add education.");
       return;
     }
     setFormData({
       ...formData,
-      education: [...formData.education, {
-        degree: eduDegree,
-        field: eduField,
-        institute: eduInstitute,
-        startDate: dateFormat(eduStartDate),
-        endDate: dateFormat(eduEndDate)
-      }],
+      education: [
+        ...formData.education,
+        {
+          degree: eduDegree,
+          field: eduField,
+          institute: eduInstitute,
+          startDate: dateFormat(eduStartDate),
+          endDate: dateFormat(eduEndDate),
+        },
+      ],
     });
-    setFormInput(prev => ({ ...prev, eduDegree: "", eduField: "", eduInstitute: "", eduStartDate: "", eduEndDate: "" }));
-
+    setFormInput((prev) => ({
+      ...prev,
+      eduDegree: "",
+      eduField: "",
+      eduInstitute: "",
+      eduStartDate: "",
+      eduEndDate: "",
+    }));
   };
 
   const handleAddSkill = () => {
@@ -192,7 +232,7 @@ export default function ResumeBuilder() {
       ...formData,
       skills: [...formData.skills, { skill: formInput.skill }],
     });
-    setFormInput(prev => ({ ...prev, skill: "" }));
+    setFormInput((prev) => ({ ...prev, skill: "" }));
   };
 
   const handleAddLanguage = () => {
@@ -201,7 +241,7 @@ export default function ResumeBuilder() {
       ...formData,
       languages: [...formData.languages, { language: formInput.lang }],
     });
-    setFormInput(prev => ({ ...prev, lang: "" }));
+    setFormInput((prev) => ({ ...prev, lang: "" }));
   };
 
   const handleAddProject = () => {
@@ -212,26 +252,34 @@ export default function ResumeBuilder() {
     }
     setFormData({
       ...formData,
-      projects: [...formData.projects, {
-        projectName: projectName,
-        projectDesc: projectDesc,
-        projectLink: projectLink
-      }],
+      projects: [
+        ...formData.projects,
+        {
+          projectName: projectName,
+          projectDesc: projectDesc,
+          projectLink: projectLink,
+        },
+      ],
     });
-    setFormInput(prev => ({ ...prev, projectName: "", projectDesc: "", projectLink: "" }));
+    setFormInput((prev) => ({
+      ...prev,
+      projectName: "",
+      projectDesc: "",
+      projectLink: "",
+    }));
   };
 
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.title.trim()) newErrors.title = "Title is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone is required";
+    if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     setErrors(newErrors);
@@ -244,7 +292,7 @@ export default function ResumeBuilder() {
 
   const handleNextStep = () => {
     if (validate()) {
-      console.log('Proceeding to next step:', formData);
+      console.log("Proceeding to next step:", formData);
       setStep(step + 1);
       setProcess(((step + 1) / 3) * 100);
     }
@@ -252,252 +300,487 @@ export default function ResumeBuilder() {
 
   const handleFormInputChange = (e) => {
     const { name, value } = e.target;
-    setFormInput(prev => ({ ...prev, [name]: value }));
+    setFormInput((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
     <>
-    <div className="container">
-      <div className="form-section w-[850px] h-[90vh] overflow-y-scroll">
-        <StatusBar status={process}></StatusBar>
-        {step === 0 && (
-          <>
-            <h1 className="text-[20px] font-bold mb-4 ">Personal Information</h1>
-            <div className='grid grid-cols-2'>
-            {['name', 'title', 'email', 'phone', 'address', 'linkedin','portfolio'].map((field) => (
-              <div key={field}>
-                <label className="mb-1">{field}</label>
+      <div className="container">
+        <div className="form-section w-[850px] h-[90vh] overflow-y-scroll">
+          <StatusBar status={process}></StatusBar>
+          {step === 0 && (
+            <>
+              <h1 className="text-[20px] font-bold mb-4 ">
+                Personal Information
+              </h1>
+              <div className="grid grid-cols-2">
+                {[
+                  "name",
+                  "title",
+                  "email",
+                  "phone",
+                  "address",
+                  "linkedin",
+                  "portfolio",
+                ].map((field) => (
+                  <div key={field}>
+                    <label className="mb-1">{field}</label>
+                    <div>
+                      <input
+                        className="input"
+                        name={field}
+                        placeholder={field}
+                        onChange={handleChange}
+                        required
+                      />
+                      {errors[field] && (
+                        <p className="text-red-500 mt-[-10px]">
+                          {errors[field]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+            <Model view={modelView} modelData={modelData} setModelView={setModelView}></Model>
+          {step === 1 && (
+            <>
+              <h1 className="text-[20px] font-bold mb-4">
+                Professional Background
+              </h1>
+              <div className="flex justify-between items-center">
+                <h1 className="text-[18px] mt-4 mb-4">{fresher}</h1>
+                <Switch fresher={fresher} setFresher={setFresher}></Switch>
+              </div>
+              <div
+                className={
+                  fresher === "Experience" ? "grid grid-cols-2" : "hidden"
+                }
+              >
                 <div>
+                  <label>Role</label>
+                  <div>
+                    <input
+                      className="input"
+                      name="exprole"
+                      placeholder="Role"
+                      value={formInput.exprole}
+                      onChange={handleFormInputChange}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label>Company Name</label>
+                  <div>
+                    <input
+                      className="input"
+                      name="company"
+                      placeholder="Company Name"
+                      value={formInput.company}
+                      onChange={handleFormInputChange}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label>Start Date</label>
+                  <div>
+                    <input
+                      type="date"
+                      className="input"
+                      name="startDateExp"
+                      placeholder="Start Date"
+                      value={formInput.startDateExp}
+                      onChange={handleFormInputChange}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label>End Date</label>
+                  <div>
+                    <input
+                      type="date"
+                      className="input"
+                      name="endDateExp"
+                      placeholder="End Date"
+                      value={formInput.endDateExp}
+                      onChange={handleFormInputChange}
+                    />
+                    <br></br>
+                    <input
+                      type="checkbox"
+                      onChange={(e) =>
+                        e.target.checked
+                          ? setFormInput((prev) => ({
+                              ...prev,
+                              endDateExp: new Date()
+                                .toISOString()
+                                .split("T")[0],
+                            }))
+                          : setFormInput((prev) => ({
+                              ...prev,
+                              endDateExp: "",
+                            }))
+                      }
+                    />{" "}
+                    Currently working here
+                  </div>
+                </div>
+                <button
+                  className="p-2 rounded bg-blue-600 text-white w-[180px] mt-[-34px]"
+                  onClick={handleAddExperience}
+                >
+                  Add Experience{" "}
+                  <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>{" "}
+                </button>
+              </div>
+              <div className={fresher === "Projects" ? "block" : "hidden"}>
+                <input
+                  className="input"
+                  name="projectName"
+                  placeholder="Your project name"
+                  value={formInput.projectName}
+                  onChange={handleFormInputChange}
+                />
+                <br></br>
+                <textarea
+                  className="input"
+                  maxLength={1000}
+                  placeholder="Describe your project, write about tech stack etc."
+                  name="projectDesc"
+                  value={formInput.projectDesc}
+                  onChange={handleFormInputChange}
+                ></textarea>
+                <input
+                  className="input"
+                  name="projectLink"
+                  placeholder="Project Link"
+                  value={formInput.projectLink}
+                  onChange={handleFormInputChange}
+                />
+                <br></br>
+                <button
+                  className="p-2 rounded bg-blue-600 text-white"
+                  onClick={handleAddProject}
+                >
+                  Add Project <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>{" "}
+                </button>
+              </div>
+              <textarea
+                className="input h-[150px]"
+                value={formData.summary}
+                name="summary"
+                maxLength={600}
+                placeholder="Professional Summary"
+                onChange={handleChange}
+              />
+              <div className="text-right text-sm text-gray-500 mt-[-20px]">
+                {formData.summary.length} / 1000
+              </div>
+
+              <button
+                onClick={handleGenerateAI}
+                disabled={loading}
+                className="px-4 py-2 rounded bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? "Generating..." : "Generate with AI ✨"}
+              </button>
+            </>
+          )}
+          {step === 2 && (
+            <>
+              <h1 className="text-[20px] font-bold mb-4">Education</h1>
+              <div className="grid grid-cols-2">
+                <div>
+                  <h1>Degree/Certification</h1>
                   <input
                     className="input"
-                    name={field}
-                    placeholder={field}
-                    onChange={handleChange}
-                    required
+                    name="eduDegree"
+                    placeholder="higher qualification"
+                    value={formInput.eduDegree}
+                    onChange={handleFormInputChange}
                   />
-                  {errors[field] && <p className="text-red-500 mt-[-10px]">{errors[field]}</p>}
                 </div>
-              </div>
-            ))}
-            </div>
-          </>)}
-
-        {step === 1 && (
-          <>
-            <h1 className="text-[20px] font-bold mb-4">Professional Background</h1>
-            <div className="flex justify-between items-center">
-              <h1 className="text-[18px] mt-4 mb-4">{fresher}</h1>
-              <Switch fresher={fresher} setFresher={setFresher}></Switch>
-            </div>
-            <div className={fresher === "Experience" ? "grid grid-cols-2" : "hidden" }>
-              <div>
-              <label>Role</label>
-              <div>
-                <input className="input" name="exprole" placeholder="Role" value={formInput.exprole} onChange={handleFormInputChange} />
-              </div>
-              </div>
-              <div>
-              <label>Company Name</label>
-              <div>
-                <input className="input" name="company" placeholder="Company Name" value={formInput.company} onChange={handleFormInputChange} />
-              </div>
-              </div>
-              <div>
-              <label>Start Date</label>
-              <div>
-                <input type="date" className="input" name="startDateExp" placeholder="Start Date" value={formInput.startDateExp} onChange={handleFormInputChange} />
-              </div>
-              </div>
-              <div>
-              <label>End Date</label>
-              <div>
-                <input type="date" className="input" name="endDateExp" placeholder="End Date" value={formInput.endDateExp} onChange={handleFormInputChange} />
-                <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, endDateExp: new Date().toISOString().split('T')[0] })) : setFormInput(prev => ({ ...prev, endDateExp: "" }))} /> Currently working here
-              </div>
-              </div>
-              <button className="p-2 rounded bg-blue-600 text-white w-[180px] mt-[-34px]" onClick={handleAddExperience} >Add Experience <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
-            </div>
-            <div className={fresher === "Projects" ? "block" : "hidden"}>
-              <input className="input" name="projectName" placeholder="Your project name" value={formInput.projectName} onChange={handleFormInputChange} /><br></br>
-              <textarea className="input" maxLength={1000} placeholder="Describe your project, write about tech stack etc."  name="projectDesc" value={formInput.projectDesc} onChange={handleFormInputChange}></textarea>
-              <input className="input" name="projectLink" placeholder="Project Link" value={formInput.projectLink} onChange={handleFormInputChange} /><br></br>
-              <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddProject} >Add Project <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
-            </div>
-            <textarea
-              className="input h-[150px]"
-              value={formData.summary}
-              name="summary"
-              maxLength={600}
-              placeholder="Professional Summary"
-              onChange={handleChange}
-            />
-            <div className="text-right text-sm text-gray-500 mt-[-20px]">
-              {formData.summary.length} / 1000
-            </div>
-
-            <button
-              onClick={handleGenerateAI}
-              disabled={loading}
-              className="px-4 py-2 rounded bg-blue-600 text-white  hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-            >
-              {loading ? "Generating..." : "Generate with AI ✨"}
-            </button>
-          </>
-        )}
-        {step === 2 && (
-          <>
-            <h1 className="text-[20px] font-bold mb-4">Education</h1>
-            <div className='grid grid-cols-2'>
-              <div>
-              <h1>Degree/Certification</h1>
-              <input className="input" name="eduDegree" placeholder="higher qualification" value={formInput.eduDegree} onChange={handleFormInputChange} />
-              </div>
-              <div>
-              <h1>Field Of Study</h1>
-              <input className="input" name="eduField" placeholder="field of study" value={formInput.eduField} onChange={handleFormInputChange} />
-              </div>
-              <div>  
-              <h1>Institution</h1>
-              <input className="input" name="eduInstitute" placeholder="institution" value={formInput.eduInstitute} onChange={handleFormInputChange} />
-              </div>
-              <div>
-            <h1>Start Date</h1>
-            <input className="input" type="date" name="eduStartDate" placeholder="start date" value={formInput.eduStartDate} onChange={handleFormInputChange} />
-              </div>
-              <div>
-            <h1>End Date</h1>
-            <input className="input" type="date" name="eduEndDate" placeholder="end date" value={formInput.eduEndDate} onChange={handleFormInputChange} />
-            <br></br><input type="checkbox" onChange={(e) => e.target.checked ? setFormInput(prev => ({ ...prev, eduEndDate: new Date().toISOString().split('T')[0] })) : setFormInput(prev => ({ ...prev, eduEndDate: "" }))} /> Currently pursuing<br></br>
-              </div>  
-            </div>
-            <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddEducation} >Add Education <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
-          </>
-        )}
-        {step === 3 && (
-          <>
-          <div className='grid grid-cols-2'>
-            <div>
-            <h1 className="text-[20px] font-bold mb-4">Skills</h1>
-            <input className="input" name="skill" value={formInput.skill} placeholder="Skills" onChange={handleFormInputChange} /><br></br>
-            <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddSkill} >Add Skill <FontAwesomeIcon icon={faPlus} ></FontAwesomeIcon> </button>
-            </div>
-
-            <div>
-            <h1 className="text-[20px] font-bold mb-4">Languages</h1>
-            <input className="input" name="lang" placeholder="Languages" value={formInput.lang} onChange={handleFormInputChange} /><br></br>
-            <button className="p-2 rounded bg-blue-600 text-white" onClick={handleAddLanguage} >Add Language</button>
-            </div>                    
-          </div>
-            
-          </>
-        )}
-
-        <div className="button-group">
-          {step > 0 && (
-            <button onClick={() => {setStep(step - 1); setProcess(((step - 1) / 3) * 100); } } className="nav-button"> <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back</button>
-          )}
-          {step < 3 ? (
-            <button onClick={() => handleNextStep()} className="nav-button ml-[10px]">Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon></button>
-          ) :
-            <ResumeDownloadButton resumeData={formData} fresher={fresher} dateFormat={dateFormat} />
-          }
-        </div>
-      </div>
-      <div className="container-printable" ref={componentRef}>
-        <header>
-  <h1 className="name">{formData.name}</h1>
-  <h2>{formData.title?"("+formData.title+")":""}</h2>
-  {formData.email && (
-    <p>
-      Email: {formData.email}
-      {formData.phone && <span> | Phone: {formData.phone}</span>} | {formData.address}
-    </p>
-  )}
-  {formData.linkedin && (
-    <p>
-      Linkedin: <a href={formData.linkedin} target="_blank" rel="noopener noreferrer">{formData.linkedin}</a>
-    </p>
-  )}
-  {formData.portfolio && (
-    <p>
-      Portfolio: <a href={formData.portfolio} target="_blank" rel="noopener noreferrer">{formData.portfolio}</a>
-    </p>
-  )}
-</header>
-
-
-        <div className="section">
-          <div className="section-title">Professional Summary</div>
-          <hr></hr>
-          <p className='summary-paragraph'>{formData.summary}</p>
-        </div>
-        <div className="section">
-          <div className="section-title">{fresher === "Projects" ? "Projects" : "Work Experience"}</div>
-          <hr></hr>
-          {
-            <ul className='list-disc list-inside'>
-              {
-                formData.experience.map((exp, index) => {
-              return <div className={"item " + (fresher === "Projects" ? "hidden" : "block")} key={index}>
-                <div className={"item-title clearfix "}>
-                  {`${index+1+")"} ${exp.role} at ${exp.company}`}<FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon>
-                </div>
-                <span className="date">{exp.startDate} – {exp.endDate}{'(' + exp.duration + ')'}</span>
-              </div>
-            }
-            )
-              } 
-            </ul>
-            
-          }
-          {
-            formData.projects.map((project, index) => {
-              return <div className={"item " + (fresher === "Projects" ? "block" : "hidden")} key={index}>
                 <div>
-                  <span className="item-title clearfix">{project.projectName}</span>
-                  <p className="date">{project.projectDesc}</p>
-                  <a href="#" className="project-link underline">{project.projectLink}</a>
+                  <h1>Field Of Study</h1>
+                  <input
+                    className="input"
+                    name="eduField"
+                    placeholder="field of study"
+                    value={formInput.eduField}
+                    onChange={handleFormInputChange}
+                  />
+                </div>
+                <div>
+                  <h1>Institution</h1>
+                  <input
+                    className="input"
+                    name="eduInstitute"
+                    placeholder="institution"
+                    value={formInput.eduInstitute}
+                    onChange={handleFormInputChange}
+                  />
+                </div>
+                <div>
+                  <h1>Start Date</h1>
+                  <input
+                    className="input"
+                    type="date"
+                    name="eduStartDate"
+                    placeholder="start date"
+                    value={formInput.eduStartDate}
+                    onChange={handleFormInputChange}
+                  />
+                </div>
+                <div>
+                  <h1>End Date</h1>
+                  <input
+                    className="input"
+                    type="date"
+                    name="eduEndDate"
+                    placeholder="end date"
+                    value={formInput.eduEndDate}
+                    onChange={handleFormInputChange}
+                  />
+                  <br></br>
+                  <input
+                    type="checkbox"
+                    onChange={(e) =>
+                      e.target.checked
+                        ? setFormInput((prev) => ({
+                            ...prev,
+                            eduEndDate: new Date().toISOString().split("T")[0],
+                          }))
+                        : setFormInput((prev) => ({ ...prev, eduEndDate: "" }))
+                    }
+                  />{" "}
+                  Currently pursuing<br></br>
                 </div>
               </div>
-            }
-            )
-          }
-        </div>
-
-        <div className="section">
-          <div className="section-title">Education</div>
-          <hr></hr>
-          {
-            formData.education.map((edu, index) => {
-              return <div className="item" key={index}>
-                <div className="item-title clearfix">
-                  {edu.degree} in {edu.field}
-                  <span className="date">{edu.startDate} – {edu.endDate==dateFormat(new Date().toISOString().split('T')[0])?"Currently pursuing":edu.endDate}</span>
+              <button
+                className="p-2 rounded bg-blue-600 text-white"
+                onClick={handleAddEducation}
+              >
+                Add Education <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>{" "}
+              </button>
+            </>
+          )}
+          {step === 3 && (
+            <>
+              <div className="grid grid-cols-2">
+                <div>
+                  <h1 className="text-[20px] font-bold mb-4">Skills</h1>
+                  <input
+                    className="input"
+                    name="skill"
+                    value={formInput.skill}
+                    placeholder="Skills"
+                    onChange={handleFormInputChange}
+                  />
+                  <br></br>
+                  <button
+                    className="p-2 rounded bg-blue-600 text-white"
+                    onClick={handleAddSkill}
+                  >
+                    Add Skill <FontAwesomeIcon icon={faPlus}></FontAwesomeIcon>{" "}
+                  </button>
                 </div>
-                <div className="item-subtitle">{edu.institute}</div>
+
+                <div>
+                  <h1 className="text-[20px] font-bold mb-4">Languages</h1>
+                  <input
+                    className="input"
+                    name="lang"
+                    placeholder="Languages"
+                    value={formInput.lang}
+                    onChange={handleFormInputChange}
+                  />
+                  <br></br>
+                  <button
+                    className="p-2 rounded bg-blue-600 text-white"
+                    onClick={handleAddLanguage}
+                  >
+                    Add Language
+                  </button>
+                </div>
               </div>
+            </>
+          )}
+
+          <div className="button-group">
+            {step > 0 && (
+              <button
+                onClick={() => {
+                  setStep(step - 1);
+                  setProcess(((step - 1) / 3) * 100);
+                }}
+                className="nav-button"
+              >
+                {" "}
+                <FontAwesomeIcon icon={faArrowLeft}></FontAwesomeIcon> Back
+              </button>
+            )}
+            {step < 3 ? (
+              <button
+                onClick={() => handleNextStep()}
+                className="nav-button ml-[10px]"
+              >
+                Next <FontAwesomeIcon icon={faArrowRight}></FontAwesomeIcon>
+              </button>
+            ) : (
+              <ResumeDownloadButton
+                resumeData={formData}
+                fresher={fresher}
+                dateFormat={dateFormat}
+              />
+            )}
+          </div>
+        </div>
+        <div className="container-printable" ref={componentRef}>
+          <header>
+            <h1 className="name">{formData.name}</h1>
+            <h2>{formData.title ? "(" + formData.title + ")" : ""}</h2>
+            {formData.email && (
+              <p>
+                Email: {formData.email}
+                {formData.phone && (
+                  <span> | Phone: {formData.phone}</span>
+                )} | {formData.address}
+              </p>
+            )}
+            {formData.linkedin && (
+              <p>
+                Linkedin:{" "}
+                <a
+                  href={formData.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {formData.linkedin}
+                </a>
+              </p>
+            )}
+            {formData.portfolio && (
+              <p>
+                Portfolio:{" "}
+                <a
+                  href={formData.portfolio}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {formData.portfolio}
+                </a>
+              </p>
+            )}
+          </header>
+
+          <div className="section">
+            <div className="section-title">Professional Summary</div>
+            <hr></hr>
+            <p className="summary-paragraph">{formData.summary}</p>
+          </div>
+          <div className="section">
+            <div className="section-title">
+              {fresher === "Projects" ? "Projects" : "Work Experience"}
+            </div>
+            <hr></hr>
+            {
+              <ul className="list-disc list-inside">
+                {formData.experience.map((exp, index) => {
+                  return (
+                    <div
+                      className={
+                        "item " + (fresher === "Projects" ? "hidden" : "block")
+                      }
+                      key={index}
+                    >
+                      <div className={"item-title clearfix "}>
+                        {`${index + 1 + ")"} ${exp.role} at ${exp.company}`}
+                        <FontAwesomeIcon className="bg-[red] text-white p-1 rounded" onClick={()=>{editExp(index)}} icon={faEdit}></FontAwesomeIcon>
+                      </div>
+                      <span className="date">
+                        {exp.startDate} – {exp.endDate}
+                        {"(" + exp.duration + ")"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </ul>
             }
-            )
-          }
-        </div>
+            {formData.projects.map((project, index) => {
+              return (
+                <div
+                  className={
+                    "item " + (fresher === "Projects" ? "block" : "hidden")
+                  }
+                  key={index}
+                >
+                  <div>
+                    <span className="item-title clearfix">
+                      {project.projectName}
+                    </span>
+                    <p className="date">{project.projectDesc}</p>
+                    <a href="#" className="project-link underline">
+                      {project.projectLink}
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-        <div className="section">
-          <div className="section-title">Skills</div>
-          <hr></hr>
-          <p>{formData.skills.map((skill, index) => {
-            return <span className="date" key={index}>{skill.skill} | </span>
-          })}</p>
-        </div>
+          <div className="section">
+            <div className="section-title">Education</div>
+            <hr></hr>
+            {formData.education.map((edu, index) => {
+              return (
+                <div className="item" key={index}>
+                  <div className="item-title clearfix">
+                    {edu.degree} in {edu.field}
+                    <span className="date">
+                      {edu.startDate} –{" "}
+                      {edu.endDate ==
+                      dateFormat(new Date().toISOString().split("T")[0])
+                        ? "Currently pursuing"
+                        : edu.endDate}
+                    </span>
+                  </div>
+                  <div className="item-subtitle">{edu.institute}</div>
+                </div>
+              );
+            })}
+          </div>
 
-        <div className="section">
-          <div className="section-title">Languages</div>
-          <hr></hr>
-          <p>{formData.languages.map((lang, index) => {
-            return <span className="date" key={index}>{lang.language} | </span>
-          })}</p>
+          <div className="section">
+            <div className="section-title">Skills</div>
+            <hr></hr>
+            <p>
+              {formData.skills.map((skill, index) => {
+                return (
+                  <span className="date" key={index}>
+                    {skill.skill} |{" "}
+                  </span>
+                );
+              })}
+            </p>
+          </div>
+
+          <div className="section">
+            <div className="section-title">Languages</div>
+            <hr></hr>
+            <p>
+              {formData.languages.map((lang, index) => {
+                return (
+                  <span className="date" key={index}>
+                    {lang.language} |{" "}
+                  </span>
+                );
+              })}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
